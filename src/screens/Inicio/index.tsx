@@ -22,6 +22,7 @@ import {
   somarGastos,
 } from "./helpers";
 import {
+  DividasFixasCard,
   GastosMesCard,
   GraficoCard,
   InicioHeader,
@@ -39,6 +40,9 @@ export default function Inicio() {
   const [modalCofrinho, setModalCofrinho] = useState(false);
   const [modalDividas, setModalDividas] = useState(false);
   const [modalConfiguracoes, setModalConfiguracoes] = useState(false);
+  const [statusDividas, setStatusDividas] = useState<Record<string, boolean>>(
+    {},
+  );
 
   const {
     salarios,
@@ -66,6 +70,13 @@ export default function Inicio() {
   const cores = temaCores(modoEscuro);
   const fundoIcone = modoEscuro ? "#2A2D33" : "#F3F4F6";
   const mesAtual = getMesAtualKey();
+
+  function alterarPagamentoDivida(id: string) {
+    setStatusDividas((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  }
 
   const gastosDoMes = useMemo(
     () => filtrarGastosDoMes(transacoes, mesAtual),
@@ -248,6 +259,15 @@ export default function Inicio() {
           ultimoGasto={gastosDoMes[0]}
           onAdicionarGasto={() => setModalGasto(true)}
           onVerTodas={() => navigation.navigate("Historico")}
+        />
+
+        <DividasFixasCard
+          cores={cores}
+          modoEscuro={modoEscuro}
+          dividas={dividas}
+          statusPagamentos={statusDividas}
+          onAlterarPagamento={alterarPagamentoDivida}
+          onVerMais={() => setModalDividas(true)}
         />
 
         <GraficoCard

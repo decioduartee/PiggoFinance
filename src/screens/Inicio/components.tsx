@@ -1,6 +1,7 @@
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import {
+  Send,
   ChevronRight,
   DollarSign,
   Eye,
@@ -10,11 +11,18 @@ import {
   Settings,
 } from "lucide-react-native";
 
-import Valor from "../../components/Valor";
+import Valor from "../../components/ValorBlur";
 import GraficoSaldo from "../../components/GraficoSaldo";
-import { CORAL, LIME, LIME_DARK, PURPLE, temaCores } from "../../theme/colors";
+import {
+  CORAL,
+  LIME,
+  LIME_DARK,
+  PURPLE,
+  ORANGE,
+  temaCores,
+} from "../../theme/colors";
 import { letraMaiuscula, rotuloDia } from "../../utils/formatadores";
-import { Transacao } from "../../features/financas";
+import { Divida, Transacao } from "../../features/financas";
 import { GraficoSaldoItem } from "../../hooks/useGraficoSaldo";
 import { renderizarIconeCategoria } from "../../constants/categorias";
 
@@ -112,7 +120,7 @@ export function TopCards({
             <PiggyBank size={22} color={cores.GRAY} />
           </View>
 
-          <ChevronRight size={16} color="#8b8f94" />
+          <ChevronRight size={16} strokeWidth={2} color={cores.GRAY} />
         </View>
 
         <Text style={styles.cardLabel}>Cofrinho</Text>
@@ -131,7 +139,7 @@ export function TopCards({
       >
         <View style={styles.fluxoHeader}>
           <Text style={styles.cardLabel}>Fluxo de caixa</Text>
-          <ChevronRight size={16} color="#8b8f94" />
+          <ChevronRight size={16} strokeWidth={2} color={cores.GRAY} />
         </View>
 
         <Valor valor={totalEntradas} oculto={oculto} style={styles.cardValue} />
@@ -306,7 +314,125 @@ export function GastosMesCard({
         style={styles.verTodas}
       >
         <Text style={styles.verTodasTexto}>Ver todas as movimentações</Text>
-        <ChevronRight size={15} color={cores.GRAY} />
+        <ChevronRight size={16} color={cores.GRAY} />
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+type DividasFixasCardProps = {
+  cores: Cores;
+  modoEscuro: boolean;
+  dividas: Divida[];
+  statusPagamentos: Record<string, boolean>;
+  onAlterarPagamento: (id: string) => void;
+  onVerMais: () => void;
+};
+
+export function DividasFixasCard({
+  cores,
+  modoEscuro,
+  dividas,
+  statusPagamentos,
+  onAlterarPagamento,
+  onVerMais,
+}: DividasFixasCardProps) {
+  const dividasAtivas = dividas.filter((divida) => divida.ativa);
+
+  if (dividasAtivas.length === 0) {
+    return null;
+  }
+
+  const dividasVisiveis = dividasAtivas.slice(0, 2);
+
+  const quantidadePagas = dividasAtivas.filter(
+    (divida) => statusPagamentos[divida.id],
+  ).length;
+
+  return (
+    <View style={[styles.dividasCard, { backgroundColor: cores.CARD }]}>
+      <View style={styles.dividasHeader}>
+        <Text style={[styles.dividasTitulo, { color: cores.INK }]}>
+          Dívidas fixas
+        </Text>
+
+        <Text style={[styles.dividasContador, { color: cores.GRAY }]}>
+          {quantidadePagas}/{dividasAtivas.length} pagas
+        </Text>
+      </View>
+
+      {dividasVisiveis.map((divida, index) => {
+        const pago = Boolean(statusPagamentos[divida.id]);
+        const corStatus = pago ? LIME : ORANGE;
+
+        return (
+          <View
+            key={divida.id}
+            style={[styles.dividaItem, { backgroundColor: cores.SUB_CARD }]}
+          >
+            <View
+              style={[
+                styles.dividaIcone,
+                { backgroundColor: modoEscuro ? "#2A2D33" : "#F3F4F6" },
+              ]}
+            >
+              <Send size={17} strokeWidth={2} color={pago ? LIME : ORANGE} />
+            </View>
+
+            <View style={styles.dividaConteudo}>
+              <Text
+                numberOfLines={1}
+                style={[styles.dividaNome, { color: cores.INK }]}
+              >
+                {divida.nome}
+              </Text>
+
+              <Text style={[styles.dividaValor, { color: cores.GRAY }]}>
+                R${" "}
+                {Number(divida.valor).toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Text>
+            </View>
+            <TouchableOpacity
+              activeOpacity={0.75}
+              onPress={() => onAlterarPagamento(divida.id)}
+              style={[
+                styles.dividaStatus,
+                modoEscuro
+                  ? {
+                      backgroundColor: "transparent",
+                      borderColor: corStatus,
+                    }
+                  : {
+                      backgroundColor: cores.INK,
+                      borderColor: cores.INK,
+                    },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.dividaStatusTexto,
+                  {
+                    color: corStatus,
+                  },
+                ]}
+              >
+                {pago ? "Pago" : "Pendente"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        );
+      })}
+
+      <TouchableOpacity
+        style={styles.verMaisDividas}
+        activeOpacity={0.7}
+        onPress={onVerMais}
+      >
+        <Text style={styles.verTodasTexto}>Ver todas as dividas Fixas</Text>
+        <ChevronRight size={16} color={cores.GRAY} />
       </TouchableOpacity>
     </View>
   );

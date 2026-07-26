@@ -223,7 +223,6 @@ export const styles = StyleSheet.create({
     marginBottom: 12,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
   },
 
   icone: {
@@ -269,6 +268,101 @@ export const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
+  dividasCard: {
+    borderRadius: 24,
+    paddingTop: 18,
+    paddingHorizontal: 18,
+    paddingBottom: 14,
+    marginBottom: 14,
+  },
+
+  dividasHeader: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+
+  dividasTitulo: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+
+  dividasContador: {
+    fontSize: 12,
+    fontWeight: "400",
+  },
+
+  // MESMO PADRÃO DO transacaoCard
+  dividaItem: {
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  // EXATAMENTE O MESMO DO icone
+  dividaIcone: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
+  },
+
+  // MESMO DO transacaoInfo
+  dividaConteudo: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  // MESMO DO transacaoNome
+  dividaNome: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+
+  // MESMO DO transacaoSub
+  dividaValor: {
+    fontSize: 11,
+    fontWeight: "400",
+  },
+
+  dividaStatus: {
+    minWidth: 76,
+    height: 30,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 8,
+  },
+
+  dividaStatusTexto: {
+    fontSize: 11,
+    fontWeight: "600",
+  },
+
+  // MESMO CONCEITO DO verTodas
+  verMaisDividas: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    paddingVertical: 4,
+  },
+
+  // MESMO DO verTodasTexto
+  verMaisDividasTexto: {
+    fontSize: 13.5,
+    fontWeight: "700",
+  },
+
   graficoBox: {
     backgroundColor: "#ffffff",
     borderRadius: 24,
@@ -296,13 +390,11 @@ export const styles = StyleSheet.create({
   },
 
   transacaoLinha: {
-    backgroundColor: "#ffffff",
     borderRadius: 16,
     paddingHorizontal: 14,
     paddingVertical: 12,
     marginBottom: 10,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
   },
 });

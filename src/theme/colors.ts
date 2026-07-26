@@ -3,7 +3,8 @@ export const LIME_DARK = "#7ed957";
 export const CORAL = "#ff5c7a";
 export const GOLD = "#c9a050";
 export const PURPLE = "#8b6fd4";
-export const PURPLELIGHT = "#eee9f8"
+export const PURPLELIGHT = "#eee9f8";
+export const ORANGE = "#F59E0B";
 
 export const ICON_INK = "#16181a";
 export const ICON_LIME_BG = "#f1fbe2";

@@ -3,7 +3,7 @@ import { Text, useWindowDimensions, View } from "react-native";
 import { TrendingDown } from "lucide-react-native";
 import { LineChart } from "react-native-gifted-charts";
 
-import Valor from "../Valor";
+import Valor from "../ValorBlur";
 import { CORAL, LIME_DARK } from "../../theme/colors";
 import { styles } from "./styles";
 import { GraficoSaldoProps } from "./types";
@@ -30,11 +30,7 @@ export default function GraficoSaldo({
   );
 
   const maiorValor = useMemo(
-    () =>
-      Math.max(
-        ...data.flatMap((item) => [item.saldo, item.gastos]),
-        100,
-      ),
+    () => Math.max(...data.flatMap((item) => [item.saldo, item.gastos]), 100),
     [data],
   );
 
@@ -163,9 +159,7 @@ export default function GraficoSaldo({
 
       <View style={styles.legenda}>
         <View style={styles.legendaItem}>
-          <View
-            style={[styles.legendaPonto, { backgroundColor: LIME_DARK }]}
-          />
+          <View style={[styles.legendaPonto, { backgroundColor: LIME_DARK }]} />
           <View>
             <Text style={[styles.legendaTitulo, { color: cores.INK }]}>
               Saldo disponível

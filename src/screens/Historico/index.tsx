@@ -23,7 +23,7 @@ import { useNavigation } from "@react-navigation/native";
 import { styles } from "./styles";
 import { CORAL, ICON_INK, LIME_DARK } from "../../theme/colors";
 import useFinance from "../../hooks/useFinance";
-import Valor from "../../components/Valor";
+import Valor from "../../components/ValorBlur";
 import { rotuloDia } from "../../utils/formatadores";
 import MovimentacaoCard from "./MovimentacaoCard";
 import { Transacao } from "../../features/financas";

@@ -1,7 +1,7 @@
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { CORAL, LIME_DARK } from "../../theme/colors";
-import Valor from "../../components/Valor";
+import Valor from "../../components/ValorBlur";
 import { letraMaiuscula } from "../../utils/formatadores";
 import { styles } from "./styles";
 import { Transacao } from "../../features/financas";
