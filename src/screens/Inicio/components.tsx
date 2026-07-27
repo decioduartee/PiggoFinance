@@ -323,8 +323,12 @@ export function GastosMesCard({
 type DividasFixasCardProps = {
   cores: Cores;
   modoEscuro: boolean;
+  oculto: boolean;
   dividas: Divida[];
   statusPagamentos: Record<string, boolean>;
+
+  dividasAtualizando: Set<string>;
+
   onAlterarPagamento: (id: string) => void;
   onVerMais: () => void;
 };
@@ -332,8 +336,10 @@ type DividasFixasCardProps = {
 export function DividasFixasCard({
   cores,
   modoEscuro,
+  oculto,
   dividas,
   statusPagamentos,
+  dividasAtualizando,
   onAlterarPagamento,
   onVerMais,
 }: DividasFixasCardProps) {
@@ -363,20 +369,16 @@ export function DividasFixasCard({
 
       {dividasVisiveis.map((divida, index) => {
         const pago = Boolean(statusPagamentos[divida.id]);
-        const corStatus = pago ? LIME : ORANGE;
+        const corStatus = pago ? LIME_DARK : PURPLE;
+        const atualizando = dividasAtualizando.has(divida.id);
 
         return (
           <View
             key={divida.id}
             style={[styles.dividaItem, { backgroundColor: cores.SUB_CARD }]}
           >
-            <View
-              style={[
-                styles.dividaIcone,
-                { backgroundColor: cores.CARD },
-              ]}
-            >
-              <Send size={17} strokeWidth={2} color={pago ? LIME : ORANGE} />
+            <View style={[styles.dividaIcone, { backgroundColor: cores.CARD }]}>
+              <Send size={17} strokeWidth={2} color={pago ? LIME_DARK : PURPLE} />
             </View>
 
             <View style={styles.dividaConteudo}>
@@ -386,14 +388,12 @@ export function DividasFixasCard({
               >
                 {divida.nome}
               </Text>
-
-              <Text style={[styles.dividaValor, { color: cores.GRAY }]}>
-                R${" "}
-                {Number(divida.valor).toLocaleString("pt-BR", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </Text>
+              <Valor
+                valor={Math.abs(Number(divida.valor) || 0)}
+                oculto={oculto}
+                cor={cores.GRAY}
+                style={styles.dividaValor}
+              />
             </View>
             <TouchableOpacity
               activeOpacity={0.75}
@@ -402,12 +402,14 @@ export function DividasFixasCard({
                 styles.dividaStatus,
                 modoEscuro
                   ? {
+                      // Tema escuro: mantém como está
                       backgroundColor: "transparent",
                       borderColor: corStatus,
                     }
                   : {
-                      backgroundColor: cores.INK,
-                      borderColor: cores.INK,
+                      // Tema claro: fundo recebe a cor do status
+                      backgroundColor: corStatus,
+                      borderColor: corStatus,
                     },
               ]}
             >
@@ -415,7 +417,7 @@ export function DividasFixasCard({
                 style={[
                   styles.dividaStatusTexto,
                   {
-                    color: corStatus,
+                    color: modoEscuro ? corStatus : "#FFFFFF",
                   },
                 ]}
               >

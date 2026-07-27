@@ -45,6 +45,9 @@ export default function Inicio() {
   const [modalCofrinho, setModalCofrinho] = useState(false);
   const [modalDividas, setModalDividas] = useState(false);
   const [modalConfiguracoes, setModalConfiguracoes] = useState(false);
+  const [dividasAtualizando, setDividasAtualizando] = useState<Set<string>>(
+    () => new Set(),
+  );
 
   // ==========================================================
   // Finance Context
@@ -89,6 +92,7 @@ export default function Inicio() {
 
   const cores = temaCores(modoEscuro);
   const fundoIcone = cores.CARD;
+  const fundoIconeRecent = cores.SUB_CARD;
 
   // ==========================================================
   // Mês atual
@@ -148,28 +152,41 @@ export default function Inicio() {
   // ==========================================================
 
   async function alterarPagamentoDivida(dividaId: string) {
-    try {
-      const ocorrencia = ocorrenciasDividas.find(
-        (item) =>
-          item.dividaId === dividaId &&
-          normalizarCompetencia(item.competencia) === competenciaAtual,
+    // Impede uma segunda alteração enquanto esta dívida
+    // ainda estiver sendo sincronizada.
+    if (dividasAtualizando.has(dividaId)) {
+      return;
+    }
+
+    const ocorrencia = ocorrenciasDividas.find(
+      (item) =>
+        item.dividaId === dividaId &&
+        normalizarCompetencia(item.competencia) === competenciaAtual,
+    );
+
+    if (!ocorrencia) {
+      console.warn(
+        "Ocorrência da dívida não encontrada:",
+        dividaId,
+        "competência:",
+        competenciaAtual,
       );
 
-      if (!ocorrencia) {
-        console.warn(
-          "Ocorrência da dívida não encontrada:",
-          dividaId,
-          "competência:",
-          competenciaAtual,
-        );
+      return;
+    }
 
-        return;
-      }
+    const novoStatus = ocorrencia.status === "pago" ? "pendente" : "pago";
 
-      const novoStatus = ocorrencia.status === "pago" ? "pendente" : "pago";
+    // Bloqueia somente esta dívida.
+    setDividasAtualizando((prev) => {
+      const novo = new Set(prev);
+      novo.add(dividaId);
+      return novo;
+    });
 
+    try {
       /*
-       * O AppContext agora faz:
+       * O AppContext continua responsável por:
        *
        * 1. Atualização otimista
        * 2. Atualização de parcelasPagas
@@ -177,10 +194,18 @@ export default function Inicio() {
        * 4. Sincronização com Google Sheets
        * 5. Rollback em caso de erro
        */
-
       await alterarStatusOcorrencia(ocorrencia.id, novoStatus);
     } catch (error) {
       console.error("Erro ao alterar pagamento da dívida:", error);
+    } finally {
+      // Pequeno cooldown depois que o backend terminou.
+      setTimeout(() => {
+        setDividasAtualizando((prev) => {
+          const novo = new Set(prev);
+          novo.delete(dividaId);
+          return novo;
+        });
+      }, 400);
     }
   }
 
@@ -406,8 +431,10 @@ export default function Inicio() {
         <DividasFixasCard
           cores={cores}
           modoEscuro={modoEscuro}
+          oculto={oculto}
           dividas={dividas}
           statusPagamentos={statusDividas}
+          dividasAtualizando={dividasAtualizando}
           onAlterarPagamento={alterarPagamentoDivida}
           onVerMais={() => setModalDividas(true)}
         />
@@ -429,7 +456,7 @@ export default function Inicio() {
         <ListaGastosRecentes
           grupos={gruposLimitados}
           cores={cores}
-          fundoIcone={fundoIcone}
+          fundoIcone={fundoIconeRecent}
           oculto={oculto}
           modoEscuro={modoEscuro}
         />

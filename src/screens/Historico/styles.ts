@@ -278,7 +278,7 @@ export function createStyles(modoEscuro: boolean) {
     },
 
     statusPendente: {
-      color: CORAL,
+      color: PURPLE,
     },
 
     ordenacao: {

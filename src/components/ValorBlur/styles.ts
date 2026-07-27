@@ -2,16 +2,16 @@ import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
   container: {
-    overflow: "hidden",
-    borderRadius: 5,
+    position: "relative",
   },
 
   texto: {
-    fontWeight: "800",
+    flexShrink: 0,
   },
 
   blur: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 5,
+    borderRadius: 4,
+    overflow: "hidden",
   },
 });

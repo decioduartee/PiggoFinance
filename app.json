@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "financas-app-sdk54",
-    "slug": "financas-app-sdk54",
-    "version": "1.0.0",
+    "name": "Piggo",
+    "slug": "piggo-finance",
+    "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./src/assets/icon.png",
     "userInterfaceStyle": "light",
@@ -13,9 +13,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.decioduarte.piggo"
     },
     "android": {
+      "package": "com.decioduarte.piggo",
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -28,6 +30,12 @@
     },
     "plugins": [
       "@react-native-community/datetimepicker"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "1581e42a-c7b5-4101-9df0-70b121d69e6c"
+      }
+    },
+    "owner": "deciodev"
   }
 }

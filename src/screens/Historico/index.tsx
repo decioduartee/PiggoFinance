@@ -342,10 +342,71 @@ export default function Historico() {
     [transacoes, mesAtual],
   );
 
-  const salariosDoMes = useMemo(
-    () => salarios.filter((item) => chaveMes(item.data) === mesAtual),
-    [salarios, mesAtual],
-  );
+  /*
+   * ========================================================
+   * SALÁRIO VIGENTE
+   * ========================================================
+   *
+   * O salário continua valendo nos meses seguintes até que
+   * exista um novo salário cadastrado.
+   *
+   * Exemplo:
+   *
+   * Julho     R$ 3.000 cadastrado
+   * Agosto    usa R$ 3.000
+   * Setembro  usa R$ 3.000
+   *
+   * Outubro   R$ 3.500 cadastrado
+   * Novembro  usa R$ 3.500
+   *
+   * Isso permite calcular corretamente os meses futuros sem
+   * precisar criar salários artificiais no backend.
+   */
+
+  const salariosVigentes = useMemo(() => {
+    if (!mesAtual) {
+      return [];
+    }
+
+    /*
+     * Primeiro pegamos somente salários que já começaram
+     * até a competência selecionada.
+     */
+    const salariosValidos = salarios.filter((item) => {
+      const competenciaSalario = chaveMes(item.data);
+
+      return competenciaSalario && competenciaSalario <= mesAtual;
+    });
+
+    if (salariosValidos.length === 0) {
+      return [];
+    }
+
+    /*
+     * Descobrimos qual é a competência de salário mais
+     * recente até o mês selecionado.
+     */
+    const ultimaCompetenciaSalario = salariosValidos.reduce((ultima, item) => {
+      const competencia = chaveMes(item.data);
+
+      if (!ultima || competencia > ultima) {
+        return competencia;
+      }
+
+      return ultima;
+    }, "");
+
+    /*
+     * Mantemos todos os salários cadastrados nessa última
+     * competência.
+     *
+     * Isso é importante caso existam duas ou mais fontes
+     * de salário cadastradas no mesmo mês.
+     */
+    return salariosValidos.filter(
+      (item) => chaveMes(item.data) === ultimaCompetenciaSalario,
+    );
+  }, [salarios, mesAtual]);
 
   const ocorrenciasDoMes = useMemo(
     () =>
@@ -449,7 +510,10 @@ export default function Historico() {
   // Totais
   // ========================================================
 
-  const totalSaidasMes = useMemo(
+  /*
+   * Gastos normais registrados no mês.
+   */
+  const totalGastosMes = useMemo(
     () =>
       transacoesDoMes
         .filter((item) => item.tipo === "saida")
@@ -457,19 +521,12 @@ export default function Historico() {
     [transacoesDoMes],
   );
 
-  const totalEntradasMes = useMemo(() => {
-    const entradasTransacoes = transacoesDoMes
-      .filter((item) => item.tipo === "entrada")
-      .reduce((soma, item) => soma + Math.abs(Number(item.valor) || 0), 0);
-
-    const entradasSalarios = salariosDoMes.reduce(
-      (soma, item) => soma + Math.abs(Number(item.valor) || 0),
-      0,
-    );
-
-    return entradasTransacoes + entradasSalarios;
-  }, [transacoesDoMes, salariosDoMes]);
-
+  /*
+   * Dívidas pertencentes à competência.
+   *
+   * Cada dívida é contabilizada apenas uma vez no mês,
+   * mesmo que exista alguma ocorrência duplicada.
+   */
   const totalDividasMes = useMemo(() => {
     const contabilizadas = new Set<string>();
 
@@ -490,7 +547,54 @@ export default function Historico() {
     }, 0);
   }, [ocorrenciasDoMes, dividas]);
 
-  const saldoMes = totalEntradasMes - totalSaidasMes - totalDividasMes;
+  /*
+   * O card "Saídas" representa agora todo dinheiro
+   * comprometido naquele mês:
+   *
+   * gastos normais + dívidas.
+   */
+  const totalSaidasMes = totalGastosMes + totalDividasMes;
+
+  /*
+   * Entradas avulsas cadastradas naquele mês.
+   */
+  const totalEntradasAvulsasMes = useMemo(
+    () =>
+      transacoesDoMes
+        .filter((item) => item.tipo === "entrada")
+        .reduce((soma, item) => soma + Math.abs(Number(item.valor) || 0), 0),
+    [transacoesDoMes],
+  );
+
+  /*
+   * Salário vigente.
+   *
+   * Se não existir um novo salário no mês seguinte,
+   * continuamos usando o salário mais recente.
+   */
+  const totalSalariosVigentes = useMemo(
+    () =>
+      salariosVigentes.reduce(
+        (soma, item) => soma + Math.abs(Number(item.valor) || 0),
+        0,
+      ),
+    [salariosVigentes],
+  );
+
+  /*
+   * Entradas totais utilizadas no cálculo do saldo.
+   */
+  const totalEntradasMes = totalEntradasAvulsasMes + totalSalariosVigentes;
+
+  /*
+   * Saldo disponível / previsto:
+   *
+   * salário vigente
+   * + outras entradas
+   * - gastos
+   * - dívidas
+   */
+  const saldoMes = totalEntradasMes - totalSaidasMes;
 
   // ========================================================
   // Agrupamento
