@@ -1,5 +1,12 @@
 import { API } from "./endpoints";
-import type { NovoSalario, Salario, Transacao } from "../features/financas";
+import type {
+  NovoSalario,
+  Salario,
+  Transacao,
+  Divida,
+  NovaDivida,
+  OcorrenciaDivida,
+} from "../features/financas";
 
 function getBaseUrl() {
   if (!API.BASE_URL) {
@@ -15,6 +22,7 @@ function getBaseUrl() {
 
 async function get(resource: string, id?: string) {
   const baseUrl = getBaseUrl();
+
   const url =
     `${baseUrl}?resource=${resource}` +
     (id ? `&id=${encodeURIComponent(id)}` : "");
@@ -42,6 +50,7 @@ async function get(resource: string, id?: string) {
 
 async function post(resource: string, body: any) {
   const baseUrl = getBaseUrl();
+
   const response = await fetch(
     `${baseUrl}?resource=${resource}`,
     {
@@ -50,7 +59,7 @@ async function post(resource: string, body: any) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-    }
+    },
   );
 
   const text = await response.text();
@@ -130,6 +139,72 @@ export const api = {
 
   deleteSalario(id: string) {
     return post("salaries", {
+      action: "delete",
+      id,
+    });
+  },
+
+  // ====================================================
+  // DÍVIDAS
+  // ====================================================
+
+  getDividas() {
+    return get("debts");
+  },
+
+  getDivida(id: string) {
+    return get("debts", id);
+  },
+
+  createDivida(data: NovaDivida) {
+    return post("debts", {
+      action: "create",
+      ...data,
+    });
+  },
+
+  updateDivida(data: Divida) {
+    return post("debts", {
+      action: "update",
+      ...data,
+    });
+  },
+
+  deleteDivida(id: string) {
+    return post("debts", {
+      action: "delete",
+      id,
+    });
+  },
+
+  // ====================================================
+  // OCORRÊNCIAS DAS DÍVIDAS
+  // ====================================================
+
+  getOcorrenciasDividas() {
+    return get("debtoccurrences");
+  },
+
+  getOcorrenciaDivida(id: string) {
+    return get("debtoccurrences", id);
+  },
+
+  ensureDebtOccurrencesMonth(competencia: string) {
+    return post("debtoccurrences", {
+      action: "ensureMonth",
+      competencia,
+    });
+  },
+
+  updateOcorrenciaDivida(data: OcorrenciaDivida) {
+    return post("debtoccurrences", {
+      action: "update",
+      ...data,
+    });
+  },
+
+  deleteOcorrenciaDivida(id: string) {
+    return post("debtoccurrences", {
       action: "delete",
       id,
     });

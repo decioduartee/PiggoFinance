@@ -3,6 +3,9 @@ import type {
   Transacao,
   Salario,
   NovoSalario,
+  Divida,
+  NovaDivida,
+  OcorrenciaDivida,
 } from "./types";
 
 export const FinanceService = {
@@ -52,6 +55,48 @@ export const FinanceService = {
 
   async excluirSalario(id: string) {
     return await api.deleteSalario(id);
+  },
+
+  // ====================================================
+  // DÍVIDAS
+  // ====================================================
+
+  async listarDividas() {
+    return await api.getDividas();
+  },
+
+  async buscarDivida(id: string) {
+    return await api.getDivida(id);
+  },
+
+  async criarDivida(divida: NovaDivida) {
+    return await api.createDivida(divida);
+  },
+
+  async editarDivida(divida: Divida) {
+    return await api.updateDivida(divida);
+  },
+
+  async excluirDivida(id: string) {
+    return await api.deleteDivida(id);
+  },
+
+  // ====================================================
+  // OCORRÊNCIAS DAS DÍVIDAS
+  // ====================================================
+
+  async listarOcorrenciasDividas() {
+    return await api.getOcorrenciasDividas();
+  },
+
+  async garantirOcorrenciasMes(competencia: string) {
+    return await api.ensureDebtOccurrencesMonth(competencia);
+  },
+
+  async atualizarOcorrenciaDivida(
+    ocorrencia: OcorrenciaDivida,
+  ) {
+    return await api.updateOcorrenciaDivida(ocorrencia);
   },
 };
 

@@ -285,8 +285,9 @@ export const styles = StyleSheet.create({
   },
 
   dividasTitulo: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 13,
+    color: "#8b8f94",
+    fontWeight: "500",
   },
 
   dividasContador: {
