@@ -1,9 +1,5 @@
 import { NavigationContainer } from "@react-navigation/native";
-import {
-  createStackNavigator,
-  CardStyleInterpolators,
-  TransitionPresets,
-} from "@react-navigation/stack";
+import { createStackNavigator } from "@react-navigation/stack";
 
 import Inicio from "../screens/Inicio";
 import Historico from "../screens/Historico";
@@ -27,9 +23,13 @@ export default function AppNavigator() {
           name="Home"
           component={Inicio}
         />
+
         <Stack.Screen
           name="Historico"
           component={Historico}
+          options={{
+            gestureEnabled: false,
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>

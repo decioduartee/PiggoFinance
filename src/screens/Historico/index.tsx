@@ -1,35 +1,59 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+
 import {
   Alert,
-  ScrollView,
+  FlatList,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+
 import {
-  Search,
+  ArrowDownLeft,
+  ArrowDownUp,
+  ArrowUpRight,
+  CalendarClock,
+  ChevronLeft,
   Eye,
   EyeOff,
-  ArrowUpRight,
-  ArrowDownLeft,
-  ChevronLeft,
-  ArrowDownToDot,
-  ArrowUpFromDot,
+  Repeat,
+  Search,
 } from "lucide-react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
 
-import { styles } from "./styles";
-import { CORAL, ICON_INK, LIME_DARK } from "../../theme/colors";
-import useFinance from "../../hooks/useFinance";
+import { useNavigation } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 import Valor from "../../components/ValorBlur";
-import { rotuloDia } from "../../utils/formatadores";
-import MovimentacaoCard from "./MovimentacaoCard";
-import { Transacao } from "../../features/financas";
 import NovoGastoModal from "../../components/modals/NovoGastoModal";
+import type {
+  Divida,
+  OcorrenciaDivida,
+  Transacao,
+} from "../../features/financas";
+import useFinance from "../../hooks/useFinance";
+import { CORAL, LIME_DARK, PURPLE, temaCores } from "../../theme/colors";
+import { rotuloDia } from "../../utils/formatadores";
+
+import MovimentacaoCard from "./MovimentacaoCard";
+import { createStyles } from "./styles";
 
 type Ordem = "recentes" | "antigos";
+
+type ItemHistorico =
+  | {
+      tipoItem: "transacao";
+      id: string;
+      data: string;
+      transacao: Transacao;
+    }
+  | {
+      tipoItem: "divida";
+      id: string;
+      data: string;
+      ocorrencia: OcorrenciaDivida;
+      divida: Divida;
+    };
 
 const mesesNome = [
   "Janeiro",
@@ -46,19 +70,90 @@ const mesesNome = [
   "Dezembro",
 ];
 
-function chaveMes(data: string) {
-  return data.slice(0, 7); // 2026-07
+function chaveMes(data?: string) {
+  if (!data) return "";
+
+  const match = String(data).match(/^(\d{4})-(\d{2})/);
+
+  if (!match) return "";
+
+  return `${match[1]}-${match[2]}`;
 }
 
 function nomeMes(chave: string) {
   const [ano, mes] = chave.split("-");
   const indexMes = Number(mes) - 1;
 
+  if (!ano || indexMes < 0 || indexMes > 11) {
+    return chave;
+  }
+
   return `${mesesNome[indexMes]} ${ano}`;
 }
 
 function valorTexto(valor: number) {
-  return String(Math.abs(valor)).replace(".", ",");
+  return Math.abs(Number(valor) || 0)
+    .toFixed(2)
+    .replace(".", ",");
+}
+
+function adicionarMeses(competencia: string, quantidade: number) {
+  const [ano, mes] = competencia.split("-").map(Number);
+
+  if (!ano || !mes) {
+    return "";
+  }
+
+  const data = new Date(ano, mes - 1 + quantidade, 1);
+
+  return (
+    `${data.getFullYear()}-` + `${String(data.getMonth() + 1).padStart(2, "0")}`
+  );
+}
+
+function competenciaDaParcela(inicio: string, numeroParcela: number) {
+  const competenciaInicio = chaveMes(inicio);
+
+  if (!competenciaInicio || numeroParcela < 1) {
+    return "";
+  }
+
+  return adicionarMeses(competenciaInicio, numeroParcela - 1);
+}
+
+function criarOcorrenciaPrevista(
+  divida: Divida,
+  competencia: string,
+  numeroParcela?: number,
+): OcorrenciaDivida {
+  const dia = Math.min(Math.max(Number(divida.vencimento) || 1, 1), 28);
+
+  return {
+    id: `PREV_${divida.id}_${competencia}`,
+    dividaId: divida.id,
+    competencia,
+    numeroParcela,
+    status: "pendente",
+    vencimento: `${competencia}-${String(dia).padStart(2, "0")}`,
+    pagoEm: "",
+  };
+}
+
+function dataOcorrencia(ocorrencia: OcorrenciaDivida, divida: Divida) {
+  if (ocorrencia.vencimento) {
+    return ocorrencia.vencimento;
+  }
+
+  const competencia =
+    chaveMes(ocorrencia.competencia) || chaveMes(divida.inicio);
+
+  if (!competencia) {
+    return "";
+  }
+
+  const dia = Math.min(Math.max(Number(divida.vencimento) || 1, 1), 28);
+
+  return `${competencia}-${String(dia).padStart(2, "0")}`;
 }
 
 export default function Historico() {
@@ -67,135 +162,533 @@ export default function Historico() {
   const [modalEditar, setModalEditar] = useState(false);
   const [movimentacaoEditando, setMovimentacaoEditando] =
     useState<Transacao | null>(null);
-
   const [ordem, setOrdem] = useState<Ordem>("recentes");
+  const [mesSelecionado, setMesSelecionado] = useState<string | null>(null);
 
   const navigation = useNavigation();
 
-  const { transacoes, setTransacoes, salarios, dividas } = useFinance();
+  const {
+    transacoes,
+    salarios,
+    dividas,
+    ocorrenciasDividas,
+    modoEscuro,
+    competenciaAtual,
+    editarTransacao,
+    excluirTransacao,
+  } = useFinance();
+
+  const cores = useMemo(() => temaCores(modoEscuro), [modoEscuro]);
+
+  const styles = useMemo(() => createStyles(modoEscuro), [modoEscuro]);
+
+  // Sempre abre na competência real atual.
+  const mesAtual = mesSelecionado ?? competenciaAtual;
+  const mesFuturo = mesAtual > competenciaAtual;
+
+  // ========================================================
+  // Previsões de dívidas
+  // ========================================================
+
+  const ocorrenciasPrevistas = useMemo(() => {
+    const previstas: OcorrenciaDivida[] = [];
+
+    const chavesReais = new Set(
+      ocorrenciasDividas.map(
+        (item) => `${item.dividaId}_${chaveMes(item.competencia)}`,
+      ),
+    );
+
+    /*
+     * Primeiro descobrimos até qual competência realmente
+     * existe uma dívida parcelada a pagar.
+     *
+     * Dívidas fixas NÃO criam meses futuros sozinhas.
+     */
+    let ultimaCompetenciaParcelada = competenciaAtual;
+
+    dividas.forEach((divida) => {
+      if (!divida.ativa || divida.tipo !== "parcelada") {
+        return;
+      }
+
+      const total = Number(divida.parcelas || 0);
+      const pagas = Number(divida.parcelasPagas || 0);
+
+      if (total <= 0 || pagas >= total) {
+        return;
+      }
+
+      const competenciaFinal = competenciaDaParcela(divida.inicio, total);
+
+      if (competenciaFinal && competenciaFinal > ultimaCompetenciaParcelada) {
+        ultimaCompetenciaParcelada = competenciaFinal;
+      }
+    });
+
+    const existeParceladaFutura = ultimaCompetenciaParcelada > competenciaAtual;
+
+    dividas.forEach((divida) => {
+      if (!divida.ativa) {
+        return;
+      }
+
+      // ----------------------------------------------------
+      // PARCELADAS
+      // ----------------------------------------------------
+      if (divida.tipo === "parcelada") {
+        const total = Number(divida.parcelas || 0);
+        const pagas = Number(divida.parcelasPagas || 0);
+
+        for (let numero = pagas + 1; numero <= total; numero += 1) {
+          const competencia = competenciaDaParcela(divida.inicio, numero);
+
+          if (!competencia || competencia < competenciaAtual) {
+            continue;
+          }
+
+          const chave = `${divida.id}_${competencia}`;
+
+          if (!chavesReais.has(chave)) {
+            previstas.push(
+              criarOcorrenciaPrevista(divida, competencia, numero),
+            );
+          }
+        }
+
+        return;
+      }
+
+      // ----------------------------------------------------
+      // FIXAS
+      // ----------------------------------------------------
+      /*
+       * Uma dívida fixa só acompanha meses futuros quando
+       * alguma parcelada também exige esses meses.
+       *
+       * Sem parcelada futura, a fixa fica somente até o
+       * mês atual (ou usa a ocorrência real já existente).
+       */
+      const inicio = chaveMes(divida.inicio);
+
+      const limite = existeParceladaFutura
+        ? ultimaCompetenciaParcelada
+        : competenciaAtual;
+
+      let competencia = competenciaAtual;
+
+      while (competencia <= limite) {
+        if (!inicio || competencia >= inicio) {
+          const chave = `${divida.id}_${competencia}`;
+
+          if (!chavesReais.has(chave)) {
+            previstas.push(criarOcorrenciaPrevista(divida, competencia));
+          }
+        }
+
+        competencia = adicionarMeses(competencia, 1);
+      }
+    });
+
+    return previstas;
+  }, [dividas, ocorrenciasDividas, competenciaAtual]);
+
+  const todasOcorrencias = useMemo(
+    () => [...ocorrenciasDividas, ...ocorrenciasPrevistas],
+    [ocorrenciasDividas, ocorrenciasPrevistas],
+  );
+
+  // ========================================================
+  // Competências disponíveis
+  // ========================================================
 
   const mesesDisponiveis = useMemo(() => {
     const meses = new Set<string>();
 
     transacoes.forEach((item) => {
-      if (item.data) {
-        meses.add(chaveMes(item.data));
-      }
+      const competencia = chaveMes(item.data);
+      if (competencia) meses.add(competencia);
     });
 
     salarios.forEach((item) => {
-      if (item.data) {
-        meses.add(chaveMes(item.data));
-      }
+      const competencia = chaveMes(item.data);
+      if (competencia) meses.add(competencia);
     });
 
-    return Array.from(meses).sort((a, b) => b.localeCompare(a));
-  }, [transacoes, salarios]);
+    todasOcorrencias.forEach((item) => {
+      const competencia = chaveMes(item.competencia);
+      if (competencia) meses.add(competencia);
+    });
 
-  const [mesSelecionado, setMesSelecionado] = useState<string | null>(null);
+    if (competenciaAtual) {
+      meses.add(competenciaAtual);
+    }
 
-  const mesAtual =
-    mesSelecionado ?? mesesDisponiveis[0] ?? chaveMes(new Date().toISOString());
+    return Array.from(meses).sort((a, b) => a.localeCompare(b));
+  }, [transacoes, salarios, todasOcorrencias, competenciaAtual]);
 
-  const transacoesDoMes = useMemo(() => {
-    return transacoes.filter((item) => chaveMes(item.data) === mesAtual);
-  }, [transacoes, mesAtual]);
+  useEffect(() => {
+    if (mesSelecionado && !mesesDisponiveis.includes(mesSelecionado)) {
+      setMesSelecionado(null);
+    }
+  }, [mesSelecionado, mesesDisponiveis]);
 
-  const transacoesFiltradas = useMemo(() => {
-    const texto = busca.trim().toLowerCase().replace(",", ".");
+  // ========================================================
+  // Dados da competência
+  // ========================================================
 
-    return [...transacoesDoMes]
+  const transacoesDoMes = useMemo(
+    () => transacoes.filter((item) => chaveMes(item.data) === mesAtual),
+    [transacoes, mesAtual],
+  );
+
+  const salariosDoMes = useMemo(
+    () => salarios.filter((item) => chaveMes(item.data) === mesAtual),
+    [salarios, mesAtual],
+  );
+
+  const ocorrenciasDoMes = useMemo(
+    () =>
+      todasOcorrencias.filter(
+        (item) => chaveMes(item.competencia) === mesAtual,
+      ),
+    [todasOcorrencias, mesAtual],
+  );
+
+  // ========================================================
+  // Timeline unificada: transações + dívidas
+  // ========================================================
+
+  const itensDoMes = useMemo<ItemHistorico[]>(() => {
+    const transacoesTimeline: ItemHistorico[] = transacoesDoMes.map(
+      (transacao) => ({
+        tipoItem: "transacao",
+        id: `TR_${transacao.id}`,
+        data: transacao.data,
+        transacao,
+      }),
+    );
+
+    const dividasTimeline: ItemHistorico[] = ocorrenciasDoMes.flatMap(
+      (ocorrencia) => {
+        const divida = dividas.find((item) => item.id === ocorrencia.dividaId);
+
+        if (!divida) {
+          return [];
+        }
+
+        return [
+          {
+            tipoItem: "divida" as const,
+            id: `DB_${ocorrencia.id}`,
+            data: dataOcorrencia(ocorrencia, divida),
+            ocorrencia,
+            divida,
+          },
+        ];
+      },
+    );
+
+    return [...transacoesTimeline, ...dividasTimeline];
+  }, [transacoesDoMes, ocorrenciasDoMes, dividas]);
+
+  const itensFiltrados = useMemo(() => {
+    const texto = busca.trim().toLowerCase();
+    const textoValor = texto.replace(".", ",");
+
+    return [...itensDoMes]
       .filter((item) => {
         if (!texto) return true;
 
-        const nome = item.nome.toLowerCase();
-        const categoria = item.categoria.toLowerCase();
-        const valor = valorTexto(item.valor);
+        if (item.tipoItem === "transacao") {
+          const transacao = item.transacao;
+
+          return (
+            String(transacao.nome ?? "")
+              .toLowerCase()
+              .includes(texto) ||
+            String(transacao.categoria ?? "")
+              .toLowerCase()
+              .includes(texto) ||
+            valorTexto(transacao.valor).includes(textoValor)
+          );
+        }
+
+        const { divida, ocorrencia } = item;
+
+        const detalhe =
+          divida.tipo === "parcelada"
+            ? `parcela ${ocorrencia.numeroParcela ?? ""}/${divida.parcelas ?? ""}`
+            : "dívida fixa";
 
         return (
-          nome.includes(texto) ||
-          categoria.includes(texto) ||
-          valor.includes(texto)
+          String(divida.nome ?? "")
+            .toLowerCase()
+            .includes(texto) ||
+          detalhe.toLowerCase().includes(texto) ||
+          String(ocorrencia.status ?? "")
+            .toLowerCase()
+            .includes(texto) ||
+          valorTexto(divida.valor).includes(textoValor)
         );
       })
       .sort((a, b) => {
-        if (a.data !== b.data) {
-          return ordem === "recentes"
-            ? b.data.localeCompare(a.data)
-            : a.data.localeCompare(b.data);
+        const comparacao = String(a.data).localeCompare(String(b.data));
+
+        if (comparacao !== 0) {
+          return ordem === "recentes" ? -comparacao : comparacao;
         }
 
         return ordem === "recentes"
-          ? Number(b.id) - Number(a.id)
-          : Number(a.id) - Number(b.id);
+          ? b.id.localeCompare(a.id)
+          : a.id.localeCompare(b.id);
       });
-  }, [transacoesDoMes, busca, ordem]);
+  }, [itensDoMes, busca, ordem]);
 
-  const totalSaidasMes = useMemo(() => {
-    return Math.abs(
+  // ========================================================
+  // Totais
+  // ========================================================
+
+  const totalSaidasMes = useMemo(
+    () =>
       transacoesDoMes
         .filter((item) => item.tipo === "saida")
-        .reduce((soma, item) => soma + Math.abs(item.valor), 0),
-    );
-  }, [transacoesDoMes]);
+        .reduce((soma, item) => soma + Math.abs(Number(item.valor) || 0), 0),
+    [transacoesDoMes],
+  );
 
   const totalEntradasMes = useMemo(() => {
     const entradasTransacoes = transacoesDoMes
       .filter((item) => item.tipo === "entrada")
-      .reduce((soma, item) => soma + Math.abs(item.valor), 0);
+      .reduce((soma, item) => soma + Math.abs(Number(item.valor) || 0), 0);
 
-    const entradasSalarios = salarios
-      .filter((item) => chaveMes(item.data) === mesAtual)
-      .reduce((soma, item) => soma + Math.abs(item.valor), 0);
+    const entradasSalarios = salariosDoMes.reduce(
+      (soma, item) => soma + Math.abs(Number(item.valor) || 0),
+      0,
+    );
 
     return entradasTransacoes + entradasSalarios;
-  }, [transacoesDoMes, salarios, mesAtual]);
+  }, [transacoesDoMes, salariosDoMes]);
 
   const totalDividasMes = useMemo(() => {
-    return dividas
-      .filter((item) => item.ativa !== false)
-      .reduce((soma, item) => soma + Math.abs(item.valor), 0);
-  }, [dividas]);
+    const contabilizadas = new Set<string>();
 
-  const saldoDisponivelMes = totalEntradasMes - totalSaidasMes;
+    return ocorrenciasDoMes.reduce((soma, ocorrencia) => {
+      if (contabilizadas.has(ocorrencia.dividaId)) {
+        return soma;
+      }
+
+      const divida = dividas.find((item) => item.id === ocorrencia.dividaId);
+
+      if (!divida) {
+        return soma;
+      }
+
+      contabilizadas.add(ocorrencia.dividaId);
+
+      return soma + Math.abs(Number(divida.valor) || 0);
+    }, 0);
+  }, [ocorrenciasDoMes, dividas]);
+
+  const saldoMes = totalEntradasMes - totalSaidasMes - totalDividasMes;
+
+  // ========================================================
+  // Agrupamento
+  // ========================================================
 
   const grupos = useMemo(() => {
-    const out: Record<string, typeof transacoesFiltradas> = {};
+    const resultado: Record<string, ItemHistorico[]> = {};
 
-    transacoesFiltradas.forEach((item) => {
-      const rotulo = rotuloDia(item.data);
+    itensFiltrados.forEach((item) => {
+      const rotulo = item.data ? rotuloDia(item.data) : "Sem data";
 
-      if (!out[rotulo]) out[rotulo] = [];
+      if (!resultado[rotulo]) {
+        resultado[rotulo] = [];
+      }
 
-      out[rotulo].push(item);
+      resultado[rotulo].push(item);
     });
 
-    return out;
-  }, [transacoesFiltradas]);
+    return resultado;
+  }, [itensFiltrados]);
+
+  // ========================================================
+  // Ações
+  // ========================================================
 
   function alternarOrdem() {
     setOrdem((atual) => (atual === "recentes" ? "antigos" : "recentes"));
   }
 
+  function abrirEdicao(item: Transacao) {
+    if (item.id.includes("TEMP_")) return;
+
+    setMovimentacaoEditando(item);
+    setModalEditar(true);
+  }
+
   function excluir(id: string) {
+    if (id.includes("TEMP_")) return;
+
     Alert.alert(
       "Excluir movimentação",
       "Deseja realmente excluir esta movimentação?",
       [
-        {
-          text: "Cancelar",
-          style: "cancel",
-        },
+        { text: "Cancelar", style: "cancel" },
         {
           text: "Excluir",
           style: "destructive",
           onPress: () => {
-            setTransacoes((prev) => prev.filter((item) => item.id !== id));
+            void excluirTransacao(id);
           },
         },
       ],
     );
   }
+
+  const gruposLista = useMemo(
+    () =>
+      Object.entries(grupos).map(([titulo, itens]) => ({
+        titulo,
+        itens,
+      })),
+    [grupos],
+  );
+
+  const headerHistorico = (
+    <>
+      <View style={styles.header}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <ChevronLeft size={22} color={cores.INK} />
+          <Text style={styles.tituloButton}>Inicio</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={styles.olhoBotao}
+          onPress={() => setOculto((valor) => !valor)}
+        >
+          {oculto ? (
+            <EyeOff size={22} color={cores.GRAY} />
+          ) : (
+            <Eye size={22} color={cores.GRAY} />
+          )}
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.titulo}>Histórico</Text>
+
+      <Text style={styles.subtitulo}>
+        {mesFuturo
+          ? "Movimentações e compromissos previstos"
+          : "Movimentações e compromissos do mês"}
+      </Text>
+
+      <View style={styles.buscaBox}>
+        <Search size={18} color={cores.GRAY} />
+
+        <TextInput
+          placeholder="Buscar nome, categoria ou valor..."
+          placeholderTextColor={cores.GRAY}
+          value={busca}
+          onChangeText={setBusca}
+          style={styles.buscaInput}
+        />
+      </View>
+
+      <FlatList
+        horizontal
+        data={mesesDisponiveis}
+        keyExtractor={(mes) => mes}
+        showsHorizontalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.meses}
+        renderItem={({ item: mes }) => {
+          const selecionado = mes === mesAtual;
+
+          return (
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => setMesSelecionado(mes)}
+              style={[
+                styles.mesButton,
+                selecionado && styles.mesButtonSelecionado,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.mesTexto,
+                  selecionado && styles.mesTextoSelecionado,
+                ]}
+              >
+                {nomeMes(mes)}
+              </Text>
+            </TouchableOpacity>
+          );
+        }}
+      />
+
+      {mesFuturo && (
+        <View style={styles.previsaoBox}>
+          <CalendarClock size={16} color={PURPLE} />
+          <Text style={styles.previsaoTexto}>
+            Este mês contém valores previstos.
+          </Text>
+        </View>
+      )}
+
+      <View style={styles.resumo}>
+        <View style={styles.resumoCard}>
+          <View style={styles.resumoIconeEntrada}>
+            <ArrowUpRight size={17} color={LIME_DARK} />
+          </View>
+
+          <Text style={styles.resumoLabel}>
+            {mesFuturo ? "Saldo previsto" : "Saldo disponível"}
+          </Text>
+
+          <Valor
+            valor={saldoMes}
+            oculto={oculto}
+            cor={saldoMes >= 0 ? LIME_DARK : CORAL}
+            style={styles.resumoValor}
+          />
+        </View>
+
+        <View style={styles.resumoCard}>
+          <View style={styles.resumoIconeSaida}>
+            <ArrowDownLeft size={17} color={CORAL} />
+          </View>
+
+          <Text style={styles.resumoLabel}>Saídas</Text>
+
+          <Valor
+            valor={totalSaidasMes}
+            oculto={oculto}
+            negativo
+            cor={CORAL}
+            style={styles.resumoValor}
+          />
+        </View>
+      </View>
+
+      <TouchableOpacity
+        style={styles.ordenacao}
+        activeOpacity={0.8}
+        onPress={alternarOrdem}
+      >
+        <ArrowDownUp size={16} color={cores.GRAY} style={{ marginRight: 6 }} />
+        <Text style={styles.ordenacaoTexto}>
+          {ordem === "recentes" ? "Mais recentes" : "Mais antigos"}
+        </Text>
+      </TouchableOpacity>
+    </>
+  );
+
   return (
     <SafeAreaView style={styles.screen}>
       <NovoGastoModal
@@ -206,185 +699,100 @@ export default function Historico() {
           setMovimentacaoEditando(null);
         }}
         onSalvar={(nova) => {
-          setTransacoes((prev) =>
-            prev.map((item) => (item.id === nova.id ? nova : item)),
-          );
-
           setModalEditar(false);
           setMovimentacaoEditando(null);
+          void editarTransacao(nova);
         }}
       />
 
-      <ScrollView
-        contentContainerStyle={styles.content}
+      <FlatList
+        data={gruposLista}
+        keyExtractor={(item) => item.titulo}
         showsVerticalScrollIndicator={false}
-      >
-        {/* HEADER */}
-
-        <View style={styles.header}>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <ChevronLeft size={22} color="#16181a" />
-            <Text style={styles.tituloButton}>Inicio</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={styles.olhoBotao}
-            onPress={() => setOculto((v) => !v)}
-          >
-            {oculto ? (
-              <EyeOff size={22} color="#8b8f94" />
-            ) : (
-              <Eye size={22} color="#8b8f94" />
-            )}
-          </TouchableOpacity>
-        </View>
-
-        <View>
-          <Text style={styles.titulo}>Histórico</Text>
-
-          <Text style={styles.subtitulo}>
-            Todas as movimentações feitas no mês
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        ListHeaderComponent={headerHistorico}
+        ListEmptyComponent={
+          <Text style={styles.vazio}>
+            Nenhuma movimentação ou compromisso encontrado.
           </Text>
-        </View>
+        }
+        renderItem={({ item: grupo }) => (
+          <View style={styles.grupo}>
+            <Text style={styles.grupoTitulo}>{grupo.titulo}</Text>
 
-        {/* BUSCA */}
+            {grupo.itens.map((item) => {
+              if (item.tipoItem === "transacao") {
+                return (
+                  <MovimentacaoCard
+                    key={item.id}
+                    item={item.transacao}
+                    oculto={oculto}
+                    onEditar={abrirEdicao}
+                    onExcluir={excluir}
+                  />
+                );
+              }
 
-        <View style={styles.buscaBox}>
-          <Search size={18} color="#8b8f94" />
+              const { divida, ocorrencia } = item;
+              const futuro =
+                chaveMes(ocorrencia.competencia) > competenciaAtual;
 
-          <TextInput
-            placeholder="Buscar nome, categoria ou valor..."
-            placeholderTextColor="#8b8f94"
-            value={busca}
-            onChangeText={setBusca}
-            style={styles.buscaInput}
-          />
-        </View>
+              const status = futuro
+                ? "Previsto"
+                : ocorrencia.status === "pago"
+                  ? "Pago"
+                  : "Pendente";
 
-        {/* MESES */}
+              const detalhe =
+                divida.tipo === "parcelada"
+                  ? `Parcela ${ocorrencia.numeroParcela ?? "?"}/${divida.parcelas ?? "?"}`
+                  : "Dívida fixa";
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.meses}
-        >
-          {mesesDisponiveis.map((mes) => {
-            const selecionado = mes === mesAtual;
+              return (
+                <View key={item.id} style={styles.linha}>
+                  <View style={styles.iconeDivida}>
+                    <Repeat size={20} color={PURPLE} />
+                  </View>
 
-            return (
-              <TouchableOpacity
-                key={mes}
-                activeOpacity={0.85}
-                onPress={() => setMesSelecionado(mes)}
-                style={[
-                  styles.mesButton,
-                  selecionado && styles.mesButtonSelecionado,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.mesTexto,
-                    selecionado && styles.mesTextoSelecionado,
-                  ]}
-                >
-                  {nomeMes(mes)}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+                  <View style={styles.info}>
+                    <Text numberOfLines={1} style={styles.nome}>
+                      {divida.nome}
+                    </Text>
 
-        {/* RESUMO */}
+                    <View style={styles.dividaDetalhes}>
+                      <Text style={styles.categoria}>{detalhe}</Text>
 
-        <View style={styles.resumo}>
-          <View style={styles.resumoCard}>
-            <View style={styles.resumoIconeEntrada}>
-              <ArrowUpRight size={17} color={LIME_DARK} />
-            </View>
+                      <Text style={styles.dividaSeparador}>•</Text>
 
-            <Text style={styles.resumoLabel}>Saldo disponível</Text>
+                      <Text
+                        style={[
+                          styles.dividaStatus,
+                          futuro
+                            ? styles.statusPrevisto
+                            : ocorrencia.status === "pago"
+                              ? styles.statusPago
+                              : styles.statusPendente,
+                        ]}
+                      >
+                        {status}
+                      </Text>
+                    </View>
+                  </View>
 
-            <Valor
-              valor={saldoDisponivelMes}
-              oculto={oculto}
-              cor={saldoDisponivelMes >= 0 ? LIME_DARK : CORAL}
-              style={styles.resumoValor}
-            />
+                  <Valor
+                    valor={Math.abs(Number(divida.valor) || 0)}
+                    oculto={oculto}
+                    negativo
+                    cor={CORAL}
+                    style={styles.valor}
+                  />
+                </View>
+              );
+            })}
           </View>
-
-          <View style={styles.resumoCard}>
-            <View style={styles.resumoIconeSaida}>
-              <ArrowDownLeft size={17} color={CORAL} />
-            </View>
-
-            <Text style={styles.resumoLabel}>Saídas</Text>
-
-            <Valor
-              valor={totalSaidasMes}
-              oculto={oculto}
-              negativo
-              cor={CORAL}
-              style={styles.resumoValor}
-            />
-          </View>
-        </View>
-
-        {/* ORDENAÇÃO */}
-
-        <TouchableOpacity
-          style={styles.ordenacao}
-          activeOpacity={0.8}
-          onPress={alternarOrdem}
-        >
-          {ordem === "recentes" ? (
-            <ArrowUpFromDot
-              size={16}
-              color="#8b8f94"
-              style={{ marginRight: 6 }}
-            />
-          ) : (
-            <ArrowDownToDot
-              size={16}
-              color="#8b8f94"
-              style={{ marginRight: 6 }}
-            />
-          )}
-
-          <Text style={styles.ordenacaoTexto}>
-            {ordem === "recentes" ? "Mais recentes" : "Mais antigos"}
-          </Text>
-        </TouchableOpacity>
-
-        {/* LISTA */}
-
-        {Object.keys(grupos).length === 0 && (
-          <Text style={styles.vazio}>Nenhuma movimentação encontrada.</Text>
         )}
-
-        {Object.entries(grupos).map(([grupo, itens]) => (
-          <View key={grupo} style={styles.grupo}>
-            <Text style={styles.grupoTitulo}>{grupo}</Text>
-
-            {itens.map((item) => (
-              <MovimentacaoCard
-                key={item.id}
-                item={item}
-                oculto={oculto}
-                onEditar={(item) => {
-                  setMovimentacaoEditando(item);
-                  setModalEditar(true);
-                }}
-                onExcluir={excluir}
-              />
-            ))}
-          </View>
-        ))}
-      </ScrollView>
+      />
     </SafeAreaView>
   );
 }

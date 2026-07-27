@@ -1,262 +1,273 @@
-# Piggo Finance --- Status do Projeto
+# Piggo Finance — Status do Projeto
 
 > Projeto pessoal de estudos em desenvolvimento.
 
 ## Sobre o projeto
 
-O **Piggo Finance** é um aplicativo mobile de controle financeiro
-pessoal que estou desenvolvendo como projeto de estudo, com foco em uma
-experiência simples, visual, moderna e minimalista.
+O **Piggo Finance** é um aplicativo mobile de controle financeiro pessoal desenvolvido com foco em uma experiência simples, visual, moderna e minimalista.
 
-Fiquei um período afastado da publicação dos meus projetos pessoais
-enquanto me dedicava aos estudos e a trabalhos como freelancer. Agora
-estou retomando o desenvolvimento e voltando a publicar no GitHub os
-projetos que fazem parte da minha evolução como desenvolvedor.
+O projeto também funciona como ambiente de estudo e evolução em desenvolvimento mobile, arquitetura de aplicações, integração com APIs, persistência de dados e UI/UX.
 
-O Piggo é um desses projetos e continuará recebendo melhorias conforme
-avanço nos estudos e na implementação das funcionalidades planejadas.
-
-------------------------------------------------------------------------
+---
 
 ## Stack atual
 
--   React Native
--   Expo SDK 54
--   TypeScript
--   React Navigation
--   AsyncStorage
--   React Native Gifted Charts
--   React Native Reanimated
--   React Native Gesture Handler
--   React Native SVG
--   Expo Blur
--   Expo Linear Gradient
--   Lucide React Native
--   Google Sheets + Google Apps Script como backend
+- React Native
+- Expo SDK 54
+- TypeScript
+- React Navigation
+- AsyncStorage
+- React Native Gifted Charts
+- React Native Reanimated
+- React Native Gesture Handler
+- React Native SVG
+- Expo Blur
+- Expo Linear Gradient
+- Lucide React Native
+- Google Sheets + Google Apps Script como backend
 
-------------------------------------------------------------------------
+---
 
 ## O que já está implementado
 
 ### Estrutura do aplicativo
 
--   Estrutura organizada em `screens`, `components`, `features`,
-    `services`, `hooks`, `navigation` e `theme`.
--   Contexto global para centralizar o estado financeiro do aplicativo.
--   Navegação entre **Início** e **Histórico**.
--   Tela de carregamento.
--   Fluxo inicial de seleção de perfil.
--   Persistência do perfil selecionado.
--   Suporte a tema claro/escuro com persistência local.
+- Estrutura organizada em `screens`, `components`, `features`, `services`, `hooks`, `navigation` e `theme`.
+- Contexto global para centralizar o estado financeiro.
+- Navegação entre **Início** e **Histórico**.
+- Tela de carregamento.
+- Fluxo inicial de seleção de perfil.
+- Persistência do perfil selecionado.
+- Tema claro/escuro com persistência local.
+- Atualizações otimistas para deixar a interface responsiva sem aguardar o retorno do backend.
 
 ### Perfis
 
--   Seleção do perfil utilizado no dispositivo.
--   Perfil persistido com AsyncStorage.
--   Possibilidade de trocar o perfil posteriormente.
--   Associação automática do responsável ao cadastrar informações
-    financeiras.
+- Seleção do perfil utilizado no dispositivo.
+- Persistência com AsyncStorage.
+- Troca de perfil pelas configurações.
+- Associação automática do responsável aos registros financeiros.
 
 ### Movimentações
 
--   Estrutura de transações de entrada e saída.
--   Cadastro de movimentações.
--   Consulta das movimentações através da camada de serviço.
--   Edição de movimentações na interface.
--   Exclusão de movimentações na interface.
--   Busca por nome, categoria ou valor.
--   Organização das movimentações por data.
+- Estrutura de transações de entrada e saída.
+- Cadastro, consulta, edição e exclusão.
+- Atualização otimista após operações.
+- Busca por nome, categoria ou valor.
+- Organização por data.
 
 ### Salários
 
--   Estrutura para salários.
--   Consulta de salários através da API.
--   Cadastro de salário.
--   Edição e exclusão disponíveis na camada de serviço.
--   Associação do salário ao perfil responsável.
+- Cadastro e consulta de salários.
+- Edição e exclusão através da camada de serviço.
+- Associação ao perfil responsável.
+- Atualização imediata da interface durante sincronização.
 
-### Histórico
+### Dívidas fixas e parceladas
 
--   Filtro dinâmico por mês/ano de acordo com os dados existentes.
--   Busca por nome, categoria ou valor.
--   Ordenação por movimentações mais recentes ou mais antigas.
--   Agrupamento das movimentações por dia.
--   Exibição do total de saídas.
--   Cálculo do saldo disponível do período.
--   Ocultação dos valores financeiros.
+O fluxo de dívidas foi integrado ao estado financeiro e ao backend.
+
+Atualmente é possível:
+
+- Adicionar dívidas.
+- Editar dívidas.
+- Excluir dívidas.
+- Ativar ou desativar.
+- Definir valor e dia de vencimento.
+- Diferenciar dívida fixa de compra parcelada.
+- Definir total de parcelas.
+- Informar parcelas já pagas.
+- Definir o mês inicial do parcelamento.
+- Proteger campos estruturais do parcelamento durante a edição.
+- Controlar ocorrências mensais das dívidas.
+- Sincronizar o progresso das parcelas.
+- Impedir edição/exclusão enquanto um registro temporário ainda está sendo sincronizado.
+- Atualizar a interface de forma otimista.
+- Limpar automaticamente o formulário quando a dívida em edição é excluída.
+
+As dívidas do mês participam do cálculo do **saldo disponível**.
+
+### Histórico financeiro
+
+A tela de Histórico foi refatorada para trabalhar com movimentações reais e compromissos financeiros mensais.
+
+Recursos implementados:
+
+- Filtro dinâmico por mês e ano.
+- Abertura automática na competência atual.
+- Navegação horizontal entre competências.
+- Meses em ordem cronológica.
+- Busca por nome, categoria ou valor.
+- Ordenação entre mais recentes e mais antigos.
+- Agrupamento por dia.
+- Ocultação de valores financeiros.
+- Exibição de transações e dívidas na mesma linha do tempo.
+- Dívidas fixas identificadas no histórico mensal.
+- Parceladas exibidas como `parcela atual/total`.
+- Status **Pago**, **Pendente** e **Previsto**.
+- Cálculo do saldo disponível considerando as dívidas da competência.
+- Cálculo de saldo previsto ao visualizar meses futuros.
+- Projeção automática das parcelas restantes.
+
+#### Previsão de meses futuros
+
+Meses futuros são criados para visualização somente quando existe uma dívida parcelada com parcelas restantes.
+
+A última parcela pendente define até onde a previsão será exibida.
+
+As dívidas fixas acompanham essa projeção, mas **não criam meses futuros indefinidamente por conta própria**.
+
+Exemplo:
+
+```text
+Julho 2026
+├── Dívida fixa
+├── Parcela 4/12
+└── Movimentações
+
+Agosto 2026
+├── Dívida fixa • Previsto
+└── Parcela 5/12 • Previsto
+
+...
+
+Março 2027
+├── Dívida fixa • Previsto
+└── Parcela 12/12 • Previsto
+```
+
+Depois da última parcela prevista, novos meses deixam de ser projetados automaticamente.
 
 ### Gráfico financeiro
 
-O gráfico principal já utiliza **react-native-gifted-charts**.
+O gráfico principal utiliza **react-native-gifted-charts**.
 
-Atualmente ele possui:
+Atualmente possui:
 
--   Linha de saldo disponível.
--   Linha de gastos.
--   Destaque para o maior gasto do mês.
--   Área preenchida de forma discreta.
--   Interface sem valores no eixo Y.
--   Tratamento para meses sem movimentações.
--   Suporte à ocultação dos valores.
+- Linha de saldo disponível.
+- Linha de gastos.
+- Destaque para o maior gasto do mês.
+- Área preenchida de forma discreta.
+- Interface sem valores no eixo Y.
+- Tratamento para meses sem movimentações.
+- Suporte à ocultação dos valores.
 
 ### Integração com backend
 
-A comunicação com o backend já possui uma camada própria de API.
+A comunicação com o backend possui uma camada própria de API.
 
-Para **transações**, estão estruturadas operações de:
+Já existem operações para:
 
--   Listar.
--   Buscar.
--   Criar.
--   Atualizar.
--   Excluir.
+**Transações**
+- Listar
+- Buscar
+- Criar
+- Atualizar
+- Excluir
 
-Para **salários**, estão estruturadas operações de:
+**Salários**
+- Listar
+- Buscar
+- Criar
+- Atualizar
+- Excluir
 
--   Listar.
--   Buscar.
--   Criar.
--   Atualizar.
--   Excluir.
+**Dívidas**
+- Listar
+- Buscar
+- Criar
+- Atualizar
+- Excluir
+- Gerenciar ocorrências mensais
 
 A URL do backend é configurada através de:
 
 `EXPO_PUBLIC_API_BASE_URL`
 
-O backend foi planejado utilizando **Google Apps Script + Google
-Sheets**, com estrutura para movimentações, dívidas, cofrinho,
-configurações, logs e dashboard.
+O backend utiliza **Google Apps Script + Google Sheets**.
 
-------------------------------------------------------------------------
+---
 
 ## Em desenvolvimento / próximos passos
 
-O projeto ainda não está finalizado. Os próximos pontos planejados são:
-
-### 1. Finalizar a integração com Google Sheets
-
-A prioridade é substituir completamente os dados temporários/mockados
-pelos dados reais armazenados no Google Sheets.
-
-Isso inclui:
-
--   Transações.
--   Salários.
--   Dívidas fixas.
--   Cofrinho.
--   Configurações necessárias ao aplicativo.
--   Sincronização correta após criar, editar ou excluir dados.
--   Tratamento de erros de rede/API.
-
-### 2. Dívidas fixas
-
-Finalizar o CRUD de dívidas recorrentes:
-
--   Adicionar.
--   Editar.
--   Excluir.
--   Ativar/desativar.
--   Definir valor mensal.
--   Vencimento.
--   Diferenciar despesas recorrentes e parceladas.
--   Controlar parcelas pagas/restantes.
--   Identificar automaticamente quando uma dívida parcelada estiver
-    quitada.
--   Integrar os dados ao Google Sheets.
-
-### 3. Cofrinho
+### 1. Cofrinho
 
 Finalizar a persistência do cofrinho:
 
--   Registrar quanto foi guardado no mês.
--   Associar o registro ao mês/ano.
--   Salvar o responsável.
--   Buscar o histórico.
--   Integrar ao backend.
+- Registrar quanto foi guardado no mês.
+- Associar o registro ao mês/ano.
+- Salvar o responsável.
+- Buscar histórico.
+- Integrar completamente ao backend.
 
-> O cofrinho é um registro de organização financeira; o aplicativo não
-> movimenta dinheiro real.
+> O cofrinho é um registro de organização financeira; o aplicativo não movimenta dinheiro real.
 
-### 4. Histórico financeiro
+### 2. Gráfico da Home
 
-Evoluir a tela de histórico com:
+Continuar refinando o gráfico para representar:
 
--   Revisão dos cálculos mensais.
--   Integração completa das edições e exclusões com o backend.
--   Comparação visual entre entradas e saídas.
--   Melhor tratamento dos dados entre diferentes meses e anos.
+- Evolução do saldo disponível durante o mês.
+- Evolução/acúmulo dos gastos.
+- Dias com maior impacto financeiro.
+- Dados reais vindos do Google Sheets.
+- Animações sutis sem comprometer a performance.
 
-### 5. Gráfico da Home
+### 3. Remover dependência dos mocks
 
-Continuar refinando o gráfico para representar de forma clara:
+Eliminar os dados mockados restantes do fluxo principal, mantendo mocks somente quando forem úteis para testes.
 
--   Evolução do saldo disponível durante o mês.
--   Evolução/acúmulo dos gastos.
--   Dias com maior impacto financeiro.
--   Dados reais vindos do Google Sheets.
--   Animações sutis sem comprometer a performance.
+### 4. Qualidade e estabilidade
 
-### 6. Remover dependência dos mocks
+Antes da primeira versão estável:
 
-Ainda existem estados inicializados com dados mockados durante o
-desenvolvimento.
+- Revisar estados de loading e erro.
+- Tratar ausência de conexão.
+- Validar formulários.
+- Revisar datas e valores.
+- Evitar inconsistências após operações otimistas.
+- Testar os principais fluxos em Android e iOS.
+- Revisar responsividade.
+- Refatorar componentes quando necessário.
 
-A meta é deixar o aplicativo totalmente dependente da camada de dados
-real, mantendo mocks apenas para testes quando necessário.
-
-### 7. Qualidade e estabilidade
-
-Antes de considerar uma primeira versão estável:
-
--   Revisar estados de loading e erro.
--   Tratar ausência de conexão.
--   Validar formulários.
--   Revisar datas e valores.
--   Evitar inconsistências após operações otimistas.
--   Testar os principais fluxos em Android e iOS.
--   Revisar responsividade em diferentes tamanhos de tela.
--   Refatorar componentes onde necessário.
-
-------------------------------------------------------------------------
+---
 
 ## Roadmap resumido
 
--   [x] Estrutura base em React Native + Expo
--   [x] TypeScript
--   [x] Navegação principal
--   [x] Seleção e persistência de perfil
--   [x] Tema claro/escuro
--   [x] Estrutura de movimentações
--   [x] Estrutura de salários
--   [x] Histórico com busca, mês e ordenação
--   [x] Gráfico com saldo e gastos
--   [x] Camada de comunicação com API
--   [x] Estrutura inicial do backend Google Sheets / Apps Script
--   [ ] Finalizar integração Google Sheets
--   [ ] Remover mocks do fluxo principal
--   [ ] Finalizar CRUD de dívidas fixas
--   [ ] Finalizar persistência do cofrinho
--   [ ] Persistir edição/exclusão das movimentações no backend
--   [ ] Refinar cálculos mensais
--   [ ] Finalizar comparação Entradas x Saídas
--   [ ] Refinar gráfico da Home
--   [ ] Melhorar tratamento de loading/erros
--   [ ] Testes completos em Android e iOS
--   [ ] Revisão e refatoração para primeira versão estável
+- [x] Estrutura base em React Native + Expo
+- [x] TypeScript
+- [x] Navegação principal
+- [x] Seleção e persistência de perfil
+- [x] Tema claro/escuro
+- [x] Estrutura de movimentações
+- [x] Estrutura de salários
+- [x] Camada de comunicação com API
+- [x] Backend Google Sheets / Apps Script
+- [x] CRUD de dívidas fixas e parceladas
+- [x] Ocorrências mensais de dívidas
+- [x] Atualizações otimistas
+- [x] Histórico com busca, mês e ordenação
+- [x] Dívidas integradas ao Histórico
+- [x] Previsão de parcelas futuras
+- [x] Saldo disponível por competência
+- [x] Saldo previsto para meses futuros
+- [x] Gráfico com saldo e gastos
+- [ ] Finalizar persistência do cofrinho
+- [ ] Remover mocks restantes
+- [ ] Refinar gráfico da Home
+- [ ] Melhorar tratamento de loading/erros
+- [ ] Testes completos em Android e iOS
+- [ ] Revisão e refatoração para primeira versão estável
 
-------------------------------------------------------------------------
+---
 
 ## Objetivo
 
 O Piggo não nasceu com a intenção de ser apenas um aplicativo pronto.
-Ele também funciona como um projeto contínuo de aprendizado, onde posso
-aplicar e evoluir conhecimentos de **React Native, TypeScript,
-arquitetura de aplicações, APIs, persistência de dados, UI/UX e
-desenvolvimento mobile**.
 
-Este repositório representa o estado atual desse processo e será
-atualizado conforme novas etapas forem concluídas.
+Ele também funciona como um projeto contínuo de aprendizado, onde posso aplicar e evoluir conhecimentos de **React Native, TypeScript, arquitetura de aplicações, APIs, persistência de dados, UI/UX e desenvolvimento mobile**.
 
-------------------------------------------------------------------------
+Este repositório representa o estado atual desse processo e será atualizado conforme novas etapas forem concluídas.
+
+---
 
 **Status:** 🚧 Em desenvolvimento

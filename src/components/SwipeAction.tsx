@@ -1,6 +1,10 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import {
+  Gesture,
+  GestureDetector,
+} from "react-native-gesture-handler";
+
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -15,6 +19,7 @@ type Props = {
 };
 
 const LIMITE = 90;
+const MAX_TRANSLATE = 120;
 
 export default function SwipeAction({
   children,
@@ -24,26 +29,40 @@ export default function SwipeAction({
   const translateX = useSharedValue(0);
 
   const pan = Gesture.Pan()
+    // Só assume o gesto quando ele for claramente horizontal.
+    .activeOffsetX([-15, 15])
+
+    // Se o usuário estiver rolando verticalmente, este gesto falha
+    // e deixa a FlatList principal assumir o controle.
+    .failOffsetY([-10, 10])
+
     .onUpdate((event) => {
       translateX.value = Math.max(
-        -120,
-        Math.min(120, event.translationX)
+        -MAX_TRANSLATE,
+        Math.min(MAX_TRANSLATE, event.translationX),
       );
     })
+
     .onEnd(() => {
       if (translateX.value > LIMITE) {
         runOnJS(onEdit)();
-      }
-
-      if (translateX.value < -LIMITE) {
+      } else if (translateX.value < -LIMITE) {
         runOnJS(onDelete)();
       }
 
       translateX.value = withSpring(0);
+    })
+
+    .onFinalize(() => {
+      translateX.value = withSpring(0);
     });
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
+    transform: [
+      {
+        translateX: translateX.value,
+      },
+    ],
   }));
 
   return (

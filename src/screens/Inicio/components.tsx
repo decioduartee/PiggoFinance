@@ -116,7 +116,7 @@ export function TopCards({
         style={[styles.cardHalf, { backgroundColor: cores.CARD }]}
       >
         <View style={styles.rowBetweenTop}>
-          <View style={[styles.pigIcon, { backgroundColor: cores.LINE_DASH }]}>
+          <View style={[styles.pigIcon, { backgroundColor: cores.SUB_CARD }]}>
             <PiggyBank size={22} color={cores.GRAY} />
           </View>
 
@@ -373,7 +373,7 @@ export function DividasFixasCard({
             <View
               style={[
                 styles.dividaIcone,
-                { backgroundColor: modoEscuro ? "#2A2D33" : "#F3F4F6" },
+                { backgroundColor: cores.CARD },
               ]}
             >
               <Send size={17} strokeWidth={2} color={pago ? LIME : ORANGE} />

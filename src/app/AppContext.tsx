@@ -48,6 +48,8 @@ type AppContextData = {
   alterarModoEscuro: (ativo: boolean) => Promise<void>;
 
   adicionarTransacao: (transacao: Transacao) => Promise<void>;
+  editarTransacao: (transacao: Transacao) => Promise<void>;
+  excluirTransacao: (id: string) => Promise<void>;
   carregarTransacoes: () => Promise<void>;
 
   adicionarSalario: (salario: NovoSalario) => Promise<void>;
@@ -285,6 +287,89 @@ export function AppProvider({ children, perfilInicial }: Props) {
       }
     },
     [perfilAtual],
+  );
+
+  const editarTransacao = useCallback(
+    async (transacao: Transacao) => {
+      const anterior = transacoes.find((item) => item.id === transacao.id);
+
+      if (!anterior) {
+        throw new Error("Movimentação não encontrada.");
+      }
+
+      // Uma transação temporária ainda está sendo criada no backend.
+      if (transacao.id.includes("TEMP_")) {
+        return;
+      }
+
+      const otimista: Transacao = {
+        ...anterior,
+        ...transacao,
+        responsavel: transacao.responsavel ?? anterior.responsavel ?? perfilAtual.id,
+        atualizadoEm: new Date().toISOString(),
+      };
+
+      // Atualiza lista, totais e saldo imediatamente.
+      setTransacoes((prev) =>
+        prev.map((item) => (item.id === otimista.id ? otimista : item)),
+      );
+
+      try {
+        const atualizada = await FinanceService.editarTransacao(otimista);
+
+        setTransacoes((prev) =>
+          prev.map((item) =>
+            item.id === otimista.id ? atualizada : item,
+          ),
+        );
+      } catch (error) {
+        // Rollback
+        setTransacoes((prev) =>
+          prev.map((item) =>
+            item.id === anterior.id ? anterior : item,
+          ),
+        );
+
+        console.error("Erro ao editar movimentação:", error);
+        throw error;
+      }
+    },
+    [transacoes, perfilAtual],
+  );
+
+  const excluirTransacao = useCallback(
+    async (id: string) => {
+      const anterior = transacoes.find((item) => item.id === id);
+
+      if (!anterior) {
+        return;
+      }
+
+      // Evita DELETE de um registro que ainda não existe no backend.
+      if (id.includes("TEMP_")) {
+        return;
+      }
+
+      // Remove imediatamente da interface e recalcula os totais.
+      setTransacoes((prev) => prev.filter((item) => item.id !== id));
+
+      try {
+        await FinanceService.excluirTransacao(id);
+      } catch (error) {
+        // Rollback sem duplicar o registro.
+        setTransacoes((prev) => {
+          if (prev.some((item) => item.id === id)) {
+            return prev;
+          }
+
+          return [...prev, anterior];
+        });
+
+        console.error("Erro ao excluir movimentação:", error);
+        throw error;
+      }
+    },
+    [transacoes],
   );
 
   // ==========================================================
@@ -932,6 +1017,8 @@ export function AppProvider({ children, perfilInicial }: Props) {
       alterarModoEscuro,
 
       adicionarTransacao,
+      editarTransacao,
+      excluirTransacao,
       carregarTransacoes,
 
       adicionarSalario,
@@ -975,6 +1062,8 @@ export function AppProvider({ children, perfilInicial }: Props) {
       alterarModoEscuro,
 
       adicionarTransacao,
+      editarTransacao,
+      excluirTransacao,
       carregarTransacoes,
 
       adicionarSalario,

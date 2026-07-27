@@ -40,15 +40,10 @@ export default function Inicio() {
   // ==========================================================
 
   const [oculto, setOculto] = useState(false);
-
   const [modalGasto, setModalGasto] = useState(false);
-
   const [modalFluxo, setModalFluxo] = useState(false);
-
   const [modalCofrinho, setModalCofrinho] = useState(false);
-
   const [modalDividas, setModalDividas] = useState(false);
-
   const [modalConfiguracoes, setModalConfiguracoes] = useState(false);
 
   // ==========================================================
@@ -93,7 +88,6 @@ export default function Inicio() {
   // ==========================================================
 
   const cores = temaCores(modoEscuro);
-
   const fundoIcone = cores.CARD;
 
   // ==========================================================

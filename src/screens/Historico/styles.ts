@@ -1,258 +1,299 @@
 import { StyleSheet } from "react-native";
-import { LIME_DARK, ICON_INK } from "../../theme/colors";
+import {
+  ICON_INK,
+  LIME_DARK,
+  CORAL,
+  PURPLE,
+  temaCores,
+} from "../../theme/colors";
 
-export const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#fafaf8",
-  },
+export function createStyles(modoEscuro: boolean) {
+  const cores = temaCores(modoEscuro);
 
-  content: {
-    padding: 18,
-    paddingBottom: 40,
-  },
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: cores.BG,
+    },
 
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-  },
+    content: {
+      padding: 18,
+    },
 
-  titulo: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#16181a",
-  },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 15,
+    },
 
-  subtitulo: {
-    marginTop: 2,
-    fontSize: 13,
-    color: "#8b8f94",
-    marginBottom: 25,
-  },
+    titulo: {
+      fontSize: 28,
+      fontWeight: "800",
+      color: cores.INK,
+    },
 
-  olhoBotao: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ececec",
-  },
+    subtitulo: {
+      marginTop: 2,
+      fontSize: 13,
+      color: cores.GRAY,
+      marginBottom: 25,
+    },
 
-  olhoTexto: {
-    fontWeight: "700",
-    color: "#16181a",
-  },
+    olhoBotao: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: cores.CARD,
+      borderWidth: 1,
+      borderColor: cores.SUB_CARD,
+    },
 
-  buscaBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    height: 54,
-    borderWidth: 1,
-    borderColor: "#ececec",
-    marginBottom: 10,
-  },
+    buscaBox: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: cores.CARD,
+      borderRadius: 18,
+      paddingHorizontal: 16,
+      height: 54,
+      borderWidth: 1,
+      borderColor: cores.SUB_CARD,
+      marginBottom: 10,
+    },
 
-  buscaInput: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 15,
-    color: "#16181a",
-  },
+    buscaInput: {
+      flex: 1,
+      marginLeft: 10,
+      fontSize: 15,
+      color: cores.INK,
+    },
 
-  resumo: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 5,
-  },
+    resumo: {
+      flexDirection: "row",
+      gap: 12,
+      marginBottom: 5,
+    },
 
-  resumoCard: {
-    flex: 1,
-    backgroundColor: "#fff",
-    borderRadius: 22,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#ececec",
-  },
+    resumoCard: {
+      flex: 1,
+      backgroundColor: cores.CARD,
+      borderRadius: 22,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: cores.SUB_CARD,
+    },
 
-  resumoIconeEntrada: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#eefbe9",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
-  },
+    resumoIconeEntrada: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: cores.LIME_BG,
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 12,
+    },
 
-  resumoIconeSaida: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#ffecef",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
-  },
+    resumoIconeSaida: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: cores.CORAL_BG,
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 12,
+    },
 
-  resumoLabel: {
-    fontSize: 12,
-    color: "#8b8f94",
-    marginBottom: 4,
-  },
+    resumoLabel: {
+      fontSize: 12,
+      color: cores.GRAY,
+      marginBottom: 4,
+    },
 
-  resumoValor: {
-    fontSize: 18,
-    fontWeight: "800",
-  },
+    resumoValor: {
+      fontSize: 18,
+      fontWeight: "800",
+    },
 
-  grupo: {
-    marginBottom: 22,
-  },
+    grupo: {
+      marginBottom: 5,
+    },
 
-  grupoTitulo: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#8b8f94",
-    marginBottom: 10,
-  },
+    grupoTitulo: {
+      fontSize: 14,
+      fontWeight: "800",
+      color: cores.GRAY,
+      marginBottom: 10,
+    },
 
-  linha: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 18,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "#efefef",
-  },
+    linha: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: cores.CARD,
+      borderRadius: 18,
+      padding: 14,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: cores.SUB_CARD,
+    },
 
-  icone: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 14,
-  },
+    icone: {
+      width: 46,
+      height: 46,
+      borderRadius: 23,
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight: 14,
+      backgroundColor: cores.SUB_CARD,
+    },
 
-  info: {
-    flex: 1,
-  },
+    info: {
+      flex: 1,
+    },
 
-  nome: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#16181a",
-  },
+    nome: {
+      fontSize: 15,
+      fontWeight: "700",
+      color: cores.INK,
+    },
 
-  categoria: {
-    marginTop: 2,
-    fontSize: 12,
-    color: "#8b8f94",
-  },
+    categoria: {
+      marginTop: 2,
+      fontSize: 12,
+      color: cores.GRAY,
+    },
 
-  valor: {
-    fontSize: 15,
-    fontWeight: "800",
-    marginRight: 14,
-  },
+    valor: {
+      fontSize: 15,
+      fontWeight: "800",
+      marginRight: 14,
+    },
 
-  deleteButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "#fff4f5",
-    justifyContent: "center",
-    alignItems: "center",
-  },
+    vazio: {
+      marginTop: 40,
+      textAlign: "center",
+      color: cores.GRAY,
+      fontSize: 15,
+    },
 
-  vazio: {
-    marginTop: 40,
-    textAlign: "center",
-    color: "#8b8f94",
-    fontSize: 15,
-  },
+    backButton: {
+      width: 80,
+      height: 38,
+      borderRadius: 21,
+      flexDirection: "row",
+      gap: 2,
+      paddingRight: 5,
+      backgroundColor: cores.CARD,
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight: 14,
+      borderWidth: 1,
+      borderColor: cores.SUB_CARD,
+    },
 
-  editButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "#f2efff",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 8,
-  },
-  //
-  backButton: {
-    width: 80,
-    height: 38,
-    borderRadius: 21,
-    flexDirection: "row",
-    gap: 2,
-    paddingRight: 5,
-    backgroundColor: "#ffffff",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 14,
-    borderWidth: 1,
-    borderColor: "#ececec",
-  },
+    tituloButton: {
+      color: cores.INK,
+      fontSize: 14,
+    },
 
-  tituloButton: {
-    color: ICON_INK,
-    fontSize: 14,
-  },
+    meses: {
+      flexDirection: "row",
+      marginBottom: 10,
+      paddingRight: 18,
+    },
 
-  meses: {
-    flexDirection: "row",
-    marginBottom: 10,
-  },
+    mesButton: {
+      backgroundColor: cores.CARD,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 20,
+      marginRight: 10,
+      borderWidth: 1,
+      borderColor: cores.SUB_CARD,
+    },
 
-  mesButton: {
-    backgroundColor: "#fff",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: "#ececec",
-  },
+    mesTexto: {
+      fontWeight: "700",
+      color: cores.INK,
+    },
 
-  mesTexto: {
-    fontWeight: "700",
-    color: "#16181a",
-  },
+    mesButtonSelecionado: {
+      backgroundColor: modoEscuro ? cores.LIMEBOTAO : ICON_INK,
+      borderColor: modoEscuro ? cores.LIMEBOTAO : ICON_INK,
+    },
 
-  mesButtonSelecionado: {
-    backgroundColor: ICON_INK,
-    borderColor: ICON_INK,
-  },
+    mesTextoSelecionado: {
+      color: modoEscuro ? "#16181a" : "#ffffff",
+    },
 
-  mesTextoSelecionado: {
-    color: "#fff",
-  },
+    previsaoBox: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      paddingHorizontal: 4,
+      marginBottom: 12,
+    },
 
-  ordenacao: {
-    alignSelf: "flex-start",
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 18,
-    height: 42,
-    marginBottom: 5,
-  },
+    previsaoTexto: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: cores.GRAY,
+    },
 
-  ordenacaoTexto: {
-    color: "#8b8f94",
-    fontSize: 14,
-    fontWeight: "700",
-  },
-});
+    iconeDivida: {
+      width: 46,
+      height: 46,
+      borderRadius: 23,
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight: 14,
+      backgroundColor: modoEscuro ? cores.SUB_CARD : "#f2efff",
+    },
+
+    dividaDetalhes: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      marginTop: 2,
+    },
+
+    dividaSeparador: {
+      marginHorizontal: 5,
+      fontSize: 12,
+      color: cores.GRAY,
+    },
+
+    dividaStatus: {
+      fontSize: 12,
+      fontWeight: "700",
+    },
+
+    statusPrevisto: {
+      color: PURPLE,
+    },
+
+    statusPago: {
+      color: LIME_DARK,
+    },
+
+    statusPendente: {
+      color: CORAL,
+    },
+
+    ordenacao: {
+      alignSelf: "flex-end",
+      flexDirection: "row",
+      alignItems: "center",
+      borderRadius: 18,
+      height: 42,
+      marginBottom: 5,
+    },
+
+    ordenacaoTexto: {
+      color: cores.GRAY,
+      fontSize: 14,
+      fontWeight: "700",
+    },
+  });
+}

@@ -20,7 +20,6 @@ export function temaCores(escuro: boolean) {
         GRAY: "#9a9da3",
         CORAL_BG: "#3a2128",
         LIME_BG: "#1f2c1c",
-        LINE_DASH: "#33373d",
         LIMEBOTAO: "#7ed957",
         TRANSPARENT: "transparent"
       }
@@ -33,7 +32,6 @@ export function temaCores(escuro: boolean) {
         GRAY: "#3d3d3d",
         CORAL_BG: "#ffeaee",
         LIME_BG: "#f1fbe2",
-        LINE_DASH: "#ededeb",
         LIMEBOTAO: "#16181a",
         TRANSPARENT: "#16181a"
       };
