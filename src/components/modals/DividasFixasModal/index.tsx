@@ -436,10 +436,17 @@ export default function DividasFixasModal({
 
     Keyboard.dismiss();
 
-    try {
-      await onSalvar(divida);
+    /*
+     * O AppContext insere a dívida no estado de forma otimista antes
+     * da primeira espera do backend. Iniciamos o salvamento e limpamos
+     * o formulário imediatamente, sem aguardar o Google Sheets.
+     */
+    const salvamento = Promise.resolve(onSalvar(divida));
 
-      limpar();
+    limpar();
+
+    try {
+      await salvamento;
     } catch (error) {
       console.error("Erro ao adicionar dívida:", error);
     }

@@ -38,79 +38,50 @@ type AppContextData = {
   carregando: boolean;
 
   setSalarios: React.Dispatch<React.SetStateAction<Salario[]>>;
-
   setDividas: React.Dispatch<React.SetStateAction<Divida[]>>;
-
   setOcorrenciasDividas: React.Dispatch<
     React.SetStateAction<OcorrenciaDivida[]>
   >;
-
   setCofrinho: React.Dispatch<React.SetStateAction<number>>;
 
   modoEscuro: boolean;
-
   alterarModoEscuro: (ativo: boolean) => Promise<void>;
 
-  // ========================================================
-  // Transações
-  // ========================================================
-
   adicionarTransacao: (transacao: Transacao) => Promise<void>;
-
   carregarTransacoes: () => Promise<void>;
 
-  // ========================================================
-  // Salários
-  // ========================================================
-
   adicionarSalario: (salario: NovoSalario) => Promise<void>;
-
-  // ========================================================
-  // Dívidas
-  // ========================================================
+  editarSalario: (id: string, salario: NovoSalario) => Promise<void>;
+  excluirSalario: (id: string) => Promise<void>;
 
   adicionarDivida: (divida: NovaDivida) => Promise<void>;
-
   editarDivida: (id: string, divida: NovaDivida) => Promise<void>;
-
   excluirDivida: (id: string) => Promise<void>;
-
   alterarStatusDivida: (id: string, ativa: boolean) => Promise<void>;
-
   carregarDividas: () => Promise<void>;
-
-  // ========================================================
-  // Ocorrências
-  // ========================================================
 
   alterarStatusOcorrencia: (
     id: string,
     status: StatusOcorrenciaDivida,
   ) => Promise<void>;
-
   carregarOcorrenciasDividas: () => Promise<void>;
 
-  // ========================================================
-  // Totais
-  // ========================================================
+  competenciaAtual: string;
 
+  totalEntradasMes: number;
+  totalSaidasMes: number;
+  totalDividasMes: number;
+  saldoDisponivelMes: number;
+
+  // Compatibilidade com as telas atuais: agora são mensais.
   totalEntradas: number;
   totalSaidas: number;
   totalDividas: number;
   saldoDisponivel: number;
 
-  // ========================================================
-  // Perfil
-  // ========================================================
-
   perfilAtual: PerfilUsuario;
-
   trocarPerfil: (perfil: PerfilUsuario) => Promise<void>;
 };
-
-// ==========================================================
-// Context
-// ==========================================================
 
 export const AppContext = createContext<AppContextData>({} as AppContextData);
 
@@ -145,36 +116,113 @@ function normalizarCompetencia(valor?: string) {
   return `${match[1]}-${match[2]}`;
 }
 
+function obterCompetenciaAtual() {
+  const agora = new Date();
+
+  return (
+    `${agora.getFullYear()}-` +
+    `${String(agora.getMonth() + 1).padStart(2, "0")}`
+  );
+}
+
+function calcularNumeroParcela(inicio: string, competencia: string) {
+  const inicioNormalizado = normalizarCompetencia(inicio);
+  const competenciaNormalizada = normalizarCompetencia(competencia);
+
+  if (!inicioNormalizado || !competenciaNormalizada) {
+    return null;
+  }
+
+  const [anoInicio, mesInicio] = inicioNormalizado.split("-").map(Number);
+  const [anoCompetencia, mesCompetencia] = competenciaNormalizada
+    .split("-")
+    .map(Number);
+
+  return (anoCompetencia - anoInicio) * 12 + (mesCompetencia - mesInicio) + 1;
+}
+
+function montarVencimento(competencia: string, dia?: number) {
+  if (dia == null || Number.isNaN(Number(dia))) {
+    return "";
+  }
+
+  const [ano, mes] = competencia.split("-").map(Number);
+
+  if (!ano || !mes) {
+    return "";
+  }
+
+  const ultimoDia = new Date(ano, mes, 0).getDate();
+  const diaFinal = Math.min(Math.max(Number(dia), 1), ultimoDia);
+
+  return (
+    `${ano}-` +
+    `${String(mes).padStart(2, "0")}-` +
+    `${String(diaFinal).padStart(2, "0")}`
+  );
+}
+
+function criarOcorrenciaTemporaria(
+  divida: Divida,
+  competencia: string,
+): OcorrenciaDivida | null {
+  const inicio = normalizarCompetencia(divida.inicio);
+
+  if (!inicio || competencia < inicio || !divida.ativa) {
+    return null;
+  }
+
+  let numeroParcela: number | undefined;
+  let status: StatusOcorrenciaDivida = "pendente";
+
+  if (divida.tipo === "parcelada") {
+    const totalParcelas = Number(divida.parcelas || 0);
+    const numero = calcularNumeroParcela(divida.inicio, competencia);
+
+    if (!numero || numero < 1 || numero > totalParcelas) {
+      return null;
+    }
+
+    numeroParcela = numero;
+
+    if (numero <= Number(divida.parcelasPagas || 0)) {
+      status = "pago";
+    }
+  }
+
+  const agora = new Date().toISOString();
+
+  return {
+    id: gerarIdTemporario("DOC"),
+    dividaId: divida.id,
+    competencia,
+    numeroParcela,
+    status,
+    vencimento: montarVencimento(competencia, divida.vencimento),
+    pagoEm: "",
+    criadoEm: agora,
+    atualizadoEm: agora,
+  };
+}
+
 // ==========================================================
 // Provider
 // ==========================================================
 
 export function AppProvider({ children, perfilInicial }: Props) {
-  // ========================================================
-  // Dados financeiros
-  // ========================================================
-
   const [salarios, setSalarios] = useState<Salario[]>([]);
-
   const [dividas, setDividas] = useState<Divida[]>([]);
-
   const [ocorrenciasDividas, setOcorrenciasDividas] = useState<
     OcorrenciaDivida[]
   >([]);
-
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
-
   const [cofrinho, setCofrinho] = useState(cofrinhoInicial ?? 0);
 
-  // ========================================================
-  // Aplicativo
-  // ========================================================
-
   const [perfilAtual, setPerfilAtual] = useState<PerfilUsuario>(perfilInicial);
-
   const [modoEscuro, setModoEscuro] = useState(false);
-
   const [carregando, setCarregando] = useState(true);
+
+  const competenciaAtual = obterCompetenciaAtual();
 
   // ==========================================================
   // Tema
@@ -183,7 +231,6 @@ export function AppProvider({ children, perfilInicial }: Props) {
   const alterarModoEscuro = useCallback(async (ativo: boolean) => {
     try {
       await salvarModoEscuro(ativo);
-
       setModoEscuro(ativo);
     } catch (error) {
       console.error("Erro ao salvar tema:", error);
@@ -197,7 +244,6 @@ export function AppProvider({ children, perfilInicial }: Props) {
   const trocarPerfil = useCallback(async (perfil: PerfilUsuario) => {
     try {
       await salvarPerfilUsuario(perfil.id);
-
       setPerfilAtual(perfil);
     } catch (error) {
       console.error("Erro ao trocar perfil:", error);
@@ -230,7 +276,6 @@ export function AppProvider({ children, perfilInicial }: Props) {
       try {
         const transacaoCompleta: Transacao = {
           ...transacao,
-
           responsavel: perfilAtual.id,
         };
 
@@ -251,7 +296,6 @@ export function AppProvider({ children, perfilInicial }: Props) {
       try {
         const salarioCompleto: NovoSalario = {
           ...salario,
-
           responsavel: perfilAtual.id,
         };
 
@@ -263,8 +307,90 @@ export function AppProvider({ children, perfilInicial }: Props) {
     [perfilAtual],
   );
 
+  const editarSalario = useCallback(
+    async (id: string, dados: NovoSalario) => {
+      const anterior = salarios.find((item) => item.id === id);
+
+      if (!anterior) {
+        throw new Error("Salário não encontrado.");
+      }
+
+      if (id.startsWith("TEMP_")) {
+        return;
+      }
+
+      const otimista: Salario = {
+        ...anterior,
+        ...dados,
+        id,
+        responsavel: dados.responsavel ?? perfilAtual.id,
+        atualizadoEm: new Date().toISOString(),
+      };
+
+      // UI e totais mensais mudam antes da rede.
+      setSalarios((prev) =>
+        prev.map((item) => (item.id === id ? otimista : item)),
+      );
+
+      try {
+        const atualizado = await FinanceService.editarSalario(otimista);
+
+        setSalarios((prev) =>
+          prev.map((item) => (item.id === id ? atualizado : item)),
+        );
+      } catch (error) {
+        // Rollback
+        setSalarios((prev) =>
+          prev.map((item) => (item.id === id ? anterior : item)),
+        );
+
+        console.error("Erro ao editar salário:", error);
+        throw error;
+      }
+    },
+    [salarios, perfilAtual],
+  );
+
+  const excluirSalario = useCallback(
+    async (id: string) => {
+      const anterior = salarios.find((item) => item.id === id);
+
+      if (!anterior) {
+        return;
+      }
+
+      /*
+       * Um item temporário ainda está sendo criado no backend.
+       * Evitamos enviar DELETE para um ID que não existe no Sheets.
+       */
+      if (id.startsWith("TEMP_")) {
+        return;
+      }
+
+      // Some da interface e recalcula o saldo imediatamente.
+      setSalarios((prev) => prev.filter((item) => item.id !== id));
+
+      try {
+        await FinanceService.excluirSalario(id);
+      } catch (error) {
+        // Rollback sem duplicar.
+        setSalarios((prev) => {
+          if (prev.some((item) => item.id === id)) {
+            return prev;
+          }
+
+          return [...prev, anterior];
+        });
+
+        console.error("Erro ao excluir salário:", error);
+        throw error;
+      }
+    },
+    [salarios],
+  );
+
   // ==========================================================
-  // Carregar dívidas
+  // Dívidas
   // ==========================================================
 
   const carregarDividas = useCallback(async () => {
@@ -284,86 +410,95 @@ export function AppProvider({ children, perfilInicial }: Props) {
     }
   }, []);
 
-  // ==========================================================
-  // Adicionar dívida - OPTIMISTIC
-  // ==========================================================
-
   const adicionarDivida = useCallback(
     async (divida: NovaDivida) => {
       const idTemporario = gerarIdTemporario("DBT");
 
+      const totalParcelas = Number(divida.parcelas || 0);
+      const parcelasPagas = Number(divida.parcelasPagas || 0);
+
+      const ativaOtimista =
+        divida.tipo === "parcelada" &&
+        totalParcelas > 0 &&
+        parcelasPagas >= totalParcelas
+          ? false
+          : divida.ativa;
+
+      const agora = new Date().toISOString();
+
       const temporaria: Divida = {
         ...divida,
-
         id: idTemporario,
-
+        ativa: ativaOtimista,
         responsavel: perfilAtual.id,
-
-        criadoEm: new Date().toISOString(),
-
-        atualizadoEm: new Date().toISOString(),
+        criadoEm: agora,
+        atualizadoEm: agora,
       };
 
-      // ----------------------------------------------------
-      // 1. Mostra imediatamente
-      // ----------------------------------------------------
+      const ocorrenciaTemporaria = criarOcorrenciaTemporaria(
+        temporaria,
+        competenciaAtual,
+      );
 
+      // UI imediata
       setDividas((prev) => [...prev, temporaria]);
 
-      try {
-        // --------------------------------------------------
-        // 2. Envia para backend
-        // --------------------------------------------------
+      if (ocorrenciaTemporaria) {
+        setOcorrenciasDividas((prev) => [...prev, ocorrenciaTemporaria]);
+      }
 
+      try {
         const criada = await FinanceService.criarDivida({
           ...divida,
-
           responsavel: perfilAtual.id,
         });
-
-        // --------------------------------------------------
-        // 3. Troca temporária pela oficial
-        // --------------------------------------------------
 
         setDividas((prev) =>
           prev.map((item) => (item.id === idTemporario ? criada : item)),
         );
 
         /*
-         * O backend pode ter criado automaticamente
-         * ocorrências históricas.
+         * Mantém a ocorrência otimista ligada à dívida quando o backend
+         * troca o ID temporário pelo ID definitivo.
          *
-         * Exemplo:
-         *
-         * 12 parcelas
-         * 4 pagas
-         *
-         * Por isso sincronizamos somente as ocorrências
-         * depois da criação.
+         * Assim Fluxo de Caixa e Saldo disponível continuam atualizados
+         * sem esperar uma nova leitura do Google Sheets.
          */
+        setOcorrenciasDividas((prev) =>
+          prev.map((item) =>
+            item.dividaId === idTemporario
+              ? {
+                  ...item,
+                  dividaId: criada.id,
+                }
+              : item,
+          ),
+        );
+
+        // Garante a ocorrência do mês da dívida recém-criada.
+        await FinanceService.garantirOcorrenciasMes(competenciaAtual);
 
         const listaOcorrencias =
           await FinanceService.listarOcorrenciasDividas();
 
         setOcorrenciasDividas(listaOcorrencias ?? []);
       } catch (error) {
-        // --------------------------------------------------
-        // 4. Rollback
-        // --------------------------------------------------
-
         setDividas((prev) => prev.filter((item) => item.id !== idTemporario));
 
-        console.error("Erro ao adicionar dívida:", error);
+        setOcorrenciasDividas((prev) =>
+          prev.filter(
+            (item) =>
+              item.dividaId !== idTemporario &&
+              item.id !== ocorrenciaTemporaria?.id,
+          ),
+        );
 
+        console.error("Erro ao adicionar dívida:", error);
         throw error;
       }
     },
-    [perfilAtual],
+    [competenciaAtual, perfilAtual],
   );
-
-  // ==========================================================
-  // Editar dívida - OPTIMISTIC
-  // ==========================================================
 
   const editarDivida = useCallback(
     async (id: string, dados: NovaDivida) => {
@@ -373,88 +508,44 @@ export function AppProvider({ children, perfilInicial }: Props) {
         throw new Error("Dívida não encontrada.");
       }
 
-      /*
-       * O backend protege:
-       *
-       * tipo
-       * parcelas
-       * parcelasPagas
-       * inicio
-       *
-       * Mesmo que estejam no objeto enviado,
-       * eles não serão alterados.
-       */
-
       const otimista: Divida = {
         ...anterior,
-
         nome: dados.nome,
-
         valor: dados.valor,
-
         vencimento: dados.vencimento,
-
         ativa: dados.ativa,
-
         responsavel: perfilAtual.id,
-
         atualizadoEm: new Date().toISOString(),
       };
-
-      // ----------------------------------------------------
-      // 1. Atualiza imediatamente
-      // ----------------------------------------------------
 
       setDividas((prev) =>
         prev.map((item) => (item.id === id ? otimista : item)),
       );
 
       try {
-        // --------------------------------------------------
-        // 2. Backend
-        // --------------------------------------------------
-
         const atualizada = await FinanceService.editarDivida({
           ...anterior,
-
           nome: dados.nome,
-
           valor: dados.valor,
-
           vencimento: dados.vencimento,
-
           ativa: dados.ativa,
-
           responsavel: perfilAtual.id,
         });
-
-        // --------------------------------------------------
-        // 3. Registro oficial
-        // --------------------------------------------------
 
         setDividas((prev) =>
           prev.map((item) => (item.id === id ? atualizada : item)),
         );
       } catch (error) {
-        // --------------------------------------------------
-        // 4. Rollback
-        // --------------------------------------------------
-
         setDividas((prev) =>
           prev.map((item) => (item.id === id ? anterior : item)),
         );
 
         console.error("Erro ao editar dívida:", error);
-
         throw error;
       }
     },
     [dividas, perfilAtual],
   );
-
-  // ==========================================================
-  // Excluir dívida - OPTIMISTIC
-  // ==========================================================
 
   const excluirDivida = useCallback(
     async (id: string) => {
@@ -464,18 +555,14 @@ export function AppProvider({ children, perfilInicial }: Props) {
         return;
       }
 
-      /*
-       * Guardamos também as ocorrências,
-       * porque o backend faz exclusão em cascata.
-       */
+      // Dívida temporária ainda não existe no banco.
+      if (id.includes("_TEMP_")) {
+        return;
+      }
 
       const ocorrenciasAnteriores = ocorrenciasDividas.filter(
         (item) => item.dividaId === id,
       );
-
-      // ----------------------------------------------------
-      // 1. Remove imediatamente
-      // ----------------------------------------------------
 
       setDividas((prev) => prev.filter((item) => item.id !== id));
 
@@ -484,7 +571,6 @@ export function AppProvider({ children, perfilInicial }: Props) {
       );
 
       try {
-
         await FinanceService.excluirDivida(id);
       } catch (error) {
         setDividas((prev) => {
@@ -497,7 +583,6 @@ export function AppProvider({ children, perfilInicial }: Props) {
 
         setOcorrenciasDividas((prev) => {
           const idsExistentes = new Set(prev.map((item) => item.id));
-
           const restaurar = ocorrenciasAnteriores.filter(
             (item) => !idsExistentes.has(item.id),
           );
@@ -506,16 +591,11 @@ export function AppProvider({ children, perfilInicial }: Props) {
         });
 
         console.error("Erro ao excluir dívida:", error);
-
         throw error;
       }
     },
     [dividas, ocorrenciasDividas],
   );
-
-  // ==========================================================
-  // Ativar / desativar dívida - OPTIMISTIC
-  // ==========================================================
 
   const alterarStatusDivida = useCallback(
     async (id: string, ativa: boolean) => {
@@ -525,49 +605,29 @@ export function AppProvider({ children, perfilInicial }: Props) {
         throw new Error("Dívida não encontrada.");
       }
 
-      // ----------------------------------------------------
-      // 1. Atualiza imediatamente
-      // ----------------------------------------------------
+      if (id.includes("_TEMP_")) {
+        return;
+      }
 
       setDividas((prev) =>
-        prev.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                ativa,
-              }
-            : item,
-        ),
+        prev.map((item) => (item.id === id ? { ...item, ativa } : item)),
       );
 
       try {
-        // --------------------------------------------------
-        // 2. Backend
-        // --------------------------------------------------
-
         const atualizada = await FinanceService.editarDivida({
           ...anterior,
           ativa,
         });
 
-        // --------------------------------------------------
-        // 3. Registro oficial
-        // --------------------------------------------------
-
         setDividas((prev) =>
           prev.map((item) => (item.id === id ? atualizada : item)),
         );
       } catch (error) {
-        // --------------------------------------------------
-        // 4. Rollback
-        // --------------------------------------------------
-
         setDividas((prev) =>
           prev.map((item) => (item.id === id ? anterior : item)),
         );
 
         console.error("Erro ao alterar status da dívida:", error);
-
         throw error;
       }
     },
@@ -575,22 +635,17 @@ export function AppProvider({ children, perfilInicial }: Props) {
   );
 
   // ==========================================================
-  // Carregar ocorrências
+  // Ocorrências
   // ==========================================================
 
   const carregarOcorrenciasDividas = useCallback(async () => {
     try {
       const lista = await FinanceService.listarOcorrenciasDividas();
-
       setOcorrenciasDividas(lista ?? []);
     } catch (error) {
       console.error("Erro ao carregar ocorrências das dívidas:", error);
     }
   }, []);
-
-  // ==========================================================
-  // Alterar ocorrência - OPTIMISTIC
-  // ==========================================================
 
   const alterarStatusOcorrencia = useCallback(
     async (id: string, status: StatusOcorrenciaDivida) => {
@@ -602,81 +657,55 @@ export function AppProvider({ children, perfilInicial }: Props) {
         throw new Error("Ocorrência da dívida não encontrada.");
       }
 
+      if (ocorrenciaAnterior.status === status) {
+        return;
+      }
+
       const agora = new Date().toISOString();
 
       const ocorrenciaOtimista: OcorrenciaDivida = {
         ...ocorrenciaAnterior,
-
         status,
-
         pagoEm: status === "pago" ? agora : "",
-
         atualizadoEm: agora,
       };
-
-      // ----------------------------------------------------
-      // Descobre dívida relacionada
-      // ----------------------------------------------------
 
       const divida = dividas.find(
         (item) => item.id === ocorrenciaAnterior.dividaId,
       );
 
-      /*
-       * Guardamos a dívida anterior para rollback.
-       */
       const dividaAnterior = divida ? { ...divida } : undefined;
-
-      // ----------------------------------------------------
-      // 1. Atualiza ocorrência imediatamente
-      // ----------------------------------------------------
 
       setOcorrenciasDividas((prev) =>
         prev.map((item) => (item.id === id ? ocorrenciaOtimista : item)),
       );
 
-      // ----------------------------------------------------
-      // 2. Atualiza parcelasPagas imediatamente
-      // ----------------------------------------------------
-
+      // Atualiza parcelasPagas imediatamente sem perder
+      // o histórico inicial já registrado no backend.
       if (divida && divida.tipo === "parcelada") {
-        /*
-         * Em vez de simplesmente +1/-1,
-         * contamos as ocorrências considerando
-         * o novo status.
-         *
-         * Isso é mais seguro se o usuário alterar
-         * uma parcela antiga.
-         */
-
-        const ocorrenciasDaDivida = ocorrenciasDividas
-          .filter((item) => item.dividaId === divida.id)
-          .map((item) => (item.id === id ? ocorrenciaOtimista : item));
-
-        const quantidadePagas = ocorrenciasDaDivida.filter(
-          (item) => item.status === "pago",
-        ).length;
-
         const totalParcelas = Number(divida.parcelas || 0);
+        const atualPagas = Number(divida.parcelasPagas || 0);
 
-        const quitada = totalParcelas > 0 && quantidadePagas >= totalParcelas;
+        let novasPagas = atualPagas;
+
+        if (ocorrenciaAnterior.status !== "pago" && status === "pago") {
+          novasPagas++;
+        }
+
+        if (ocorrenciaAnterior.status === "pago" && status !== "pago") {
+          novasPagas--;
+        }
+
+        novasPagas = Math.max(0, Math.min(novasPagas, totalParcelas));
+
+        const quitada = totalParcelas > 0 && novasPagas >= totalParcelas;
 
         setDividas((prev) =>
           prev.map((item) =>
             item.id === divida.id
               ? {
                   ...item,
-
-                  parcelasPagas: quantidadePagas,
-
-                  /*
-                   * 12/12:
-                   * desativa imediatamente.
-                   *
-                   * Se voltar uma ocorrência
-                   * para pendente:
-                   * reativa imediatamente.
-                   */
+                  parcelasPagas: novasPagas,
                   ativa: !quitada,
                 }
               : item,
@@ -685,31 +714,14 @@ export function AppProvider({ children, perfilInicial }: Props) {
       }
 
       try {
-        // --------------------------------------------------
-        // 3. Backend
-        // --------------------------------------------------
-
         const atualizada =
           await FinanceService.atualizarOcorrenciaDivida(ocorrenciaOtimista);
-
-        // --------------------------------------------------
-        // 4. Registro oficial da ocorrência
-        // --------------------------------------------------
 
         setOcorrenciasDividas((prev) =>
           prev.map((item) => (item.id === id ? atualizada : item)),
         );
 
-        /*
-         * O backend executa syncDebtProgress().
-         *
-         * Buscamos somente as dívidas novamente
-         * para pegar o estado oficial:
-         *
-         * parcelasPagas
-         * ativa
-         */
-
+        // Backend executa syncDebtProgress().
         const listaDividas = await FinanceService.listarDividas();
 
         const dividasValidas = (listaDividas ?? []).filter(
@@ -721,17 +733,9 @@ export function AppProvider({ children, perfilInicial }: Props) {
 
         setDividas(dividasValidas);
       } catch (error) {
-        // --------------------------------------------------
-        // 5. Rollback ocorrência
-        // --------------------------------------------------
-
         setOcorrenciasDividas((prev) =>
           prev.map((item) => (item.id === id ? ocorrenciaAnterior : item)),
         );
-
-        // --------------------------------------------------
-        // 6. Rollback dívida
-        // --------------------------------------------------
 
         if (dividaAnterior) {
           setDividas((prev) =>
@@ -758,18 +762,7 @@ export function AppProvider({ children, perfilInicial }: Props) {
       try {
         setCarregando(true);
 
-        /*
-         * Antes de buscar as ocorrências,
-         * garantimos que as ocorrências
-         * do mês atual existam.
-         */
-
-        const agora = new Date();
-
-        const competenciaAtual =
-          `${agora.getFullYear()}-` +
-          `${String(agora.getMonth() + 1).padStart(2, "0")}`;
-
+        // Cria as ocorrências da competência atual.
         await FinanceService.garantirOcorrenciasMes(competenciaAtual);
 
         const [
@@ -780,25 +773,13 @@ export function AppProvider({ children, perfilInicial }: Props) {
           listaOcorrencias,
         ] = await Promise.all([
           buscarModoEscuro(),
-
           FinanceService.listarTransacoes(),
-
           FinanceService.listarSalarios(),
-
           FinanceService.listarDividas(),
-
           FinanceService.listarOcorrenciasDividas(),
         ]);
 
-        // ----------------------------------------------------
-        // Tema
-        // ----------------------------------------------------
-
         setModoEscuro(Boolean(tema));
-
-        // ----------------------------------------------------
-        // Transações
-        // ----------------------------------------------------
 
         const transacoesValidas = (listaTransacoes ?? []).filter(
           (transacao: Transacao) =>
@@ -809,10 +790,6 @@ export function AppProvider({ children, perfilInicial }: Props) {
 
         setTransacoes(transacoesValidas);
 
-        // ----------------------------------------------------
-        // Salários
-        // ----------------------------------------------------
-
         const salariosValidos = (listaSalarios ?? []).filter(
           (salario: Salario) =>
             Boolean(salario.id) &&
@@ -822,10 +799,6 @@ export function AppProvider({ children, perfilInicial }: Props) {
 
         setSalarios(salariosValidos);
 
-        // ----------------------------------------------------
-        // Dívidas
-        // ----------------------------------------------------
-
         const dividasValidas = (listaDividas ?? []).filter(
           (divida: Divida) =>
             Boolean(divida.id) &&
@@ -834,11 +807,6 @@ export function AppProvider({ children, perfilInicial }: Props) {
         );
 
         setDividas(dividasValidas);
-
-        // ----------------------------------------------------
-        // Ocorrências
-        // ----------------------------------------------------
-
         setOcorrenciasDividas(listaOcorrencias ?? []);
       } catch (error) {
         console.error("Erro ao iniciar aplicativo:", error);
@@ -848,34 +816,95 @@ export function AppProvider({ children, perfilInicial }: Props) {
     }
 
     iniciar();
-  }, []);
+  }, [competenciaAtual]);
 
   // ==========================================================
-  // Totais
+  // Dados da competência atual
   // ==========================================================
 
-  const totalEntradas = useMemo(() => {
-    return salarios.reduce(
+  const salariosMesAtual = useMemo(
+    () =>
+      salarios.filter(
+        (salario) => normalizarCompetencia(salario.data) === competenciaAtual,
+      ),
+    [salarios, competenciaAtual],
+  );
+
+  const transacoesMesAtual = useMemo(
+    () =>
+      transacoes.filter(
+        (transacao) =>
+          normalizarCompetencia(transacao.data) === competenciaAtual,
+      ),
+    [transacoes, competenciaAtual],
+  );
+
+  const ocorrenciasMesAtual = useMemo(
+    () =>
+      ocorrenciasDividas.filter(
+        (ocorrencia) =>
+          normalizarCompetencia(ocorrencia.competencia) === competenciaAtual,
+      ),
+    [ocorrenciasDividas, competenciaAtual],
+  );
+
+  // ==========================================================
+  // Totais mensais
+  // ==========================================================
+
+  const totalEntradasMes = useMemo(() => {
+    return salariosMesAtual.reduce(
       (soma, salario) => soma + Number(salario.valor || 0),
       0,
     );
-  }, [salarios]);
+  }, [salariosMesAtual]);
 
-  const totalSaidas = useMemo(() => {
+  const totalSaidasMes = useMemo(() => {
     return Math.abs(
-      transacoes
+      transacoesMesAtual
         .filter((transacao) => transacao.tipo === "saida")
         .reduce((soma, transacao) => soma + Number(transacao.valor || 0), 0),
     );
-  }, [transacoes]);
+  }, [transacoesMesAtual]);
 
-  const totalDividas = useMemo(() => {
-    return dividas
-      .filter((divida) => divida.ativa)
-      .reduce((soma, divida) => soma + Number(divida.valor || 0), 0);
-  }, [dividas]);
+  const totalDividasMes = useMemo(() => {
+    /*
+     * A ocorrência determina se a dívida pertence ao mês.
+     * Pago ou pendente entram igualmente no saldo.
+     *
+     * O Set evita contabilizar duas vezes uma ocorrência antiga
+     * duplicada para a mesma dívida/competência.
+     */
+    const idsContabilizados = new Set<string>();
 
-  const saldoDisponivel = totalEntradas - totalSaidas - totalDividas;
+    return ocorrenciasMesAtual.reduce((soma, ocorrencia) => {
+      if (idsContabilizados.has(ocorrencia.dividaId)) {
+        return soma;
+      }
+
+      const divida = dividas.find((item) => item.id === ocorrencia.dividaId);
+
+      if (!divida) {
+        return soma;
+      }
+
+      idsContabilizados.add(ocorrencia.dividaId);
+
+      return soma + Number(divida.valor || 0);
+    }, 0);
+  }, [ocorrenciasMesAtual, dividas]);
+
+  const saldoDisponivelMes =
+    totalEntradasMes - totalSaidasMes - totalDividasMes;
+
+  // ==========================================================
+  // Compatibilidade com telas atuais
+  // ==========================================================
+
+  const totalEntradas = totalEntradasMes;
+  const totalSaidas = totalSaidasMes;
+  const totalDividas = totalDividasMes;
+  const saldoDisponivel = saldoDisponivelMes;
 
   // ==========================================================
   // Context
@@ -903,18 +932,27 @@ export function AppProvider({ children, perfilInicial }: Props) {
       alterarModoEscuro,
 
       adicionarTransacao,
+      carregarTransacoes,
+
       adicionarSalario,
+      editarSalario,
+      excluirSalario,
 
       adicionarDivida,
       editarDivida,
       excluirDivida,
       alterarStatusDivida,
+      carregarDividas,
 
       alterarStatusOcorrencia,
-
-      carregarTransacoes,
-      carregarDividas,
       carregarOcorrenciasDividas,
+
+      competenciaAtual,
+
+      totalEntradasMes,
+      totalSaidasMes,
+      totalDividasMes,
+      saldoDisponivelMes,
 
       totalEntradas,
       totalSaidas,
@@ -937,18 +975,27 @@ export function AppProvider({ children, perfilInicial }: Props) {
       alterarModoEscuro,
 
       adicionarTransacao,
+      carregarTransacoes,
+
       adicionarSalario,
+      editarSalario,
+      excluirSalario,
 
       adicionarDivida,
       editarDivida,
       excluirDivida,
       alterarStatusDivida,
+      carregarDividas,
 
       alterarStatusOcorrencia,
-
-      carregarTransacoes,
-      carregarDividas,
       carregarOcorrenciasDividas,
+
+      competenciaAtual,
+
+      totalEntradasMes,
+      totalSaidasMes,
+      totalDividasMes,
+      saldoDisponivelMes,
 
       totalEntradas,
       totalSaidas,

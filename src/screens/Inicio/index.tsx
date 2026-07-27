@@ -14,13 +14,11 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation/AppNavigator";
 import ConfiguracoesModal from "../../components/modals/ConfiguracoesModal";
-import { FinanceService } from "../../features/financas";
 
 import {
   agruparPorDia,
   filtrarGastosDoMes,
   limitarTransacoesDosGrupos,
-  somarGastos,
 } from "./helpers";
 
 import {
@@ -51,8 +49,7 @@ export default function Inicio() {
 
   const [modalDividas, setModalDividas] = useState(false);
 
-  const [modalConfiguracoes, setModalConfiguracoes] =
-    useState(false);
+  const [modalConfiguracoes, setModalConfiguracoes] = useState(false);
 
   // ==========================================================
   // Finance Context
@@ -71,11 +68,12 @@ export default function Inicio() {
     modoEscuro,
     alterarModoEscuro,
 
-    setSalarios,
     setCofrinho,
 
     adicionarTransacao,
     adicionarSalario,
+    editarSalario,
+    excluirSalario,
 
     adicionarDivida,
     editarDivida,
@@ -83,8 +81,11 @@ export default function Inicio() {
     alterarStatusDivida,
     alterarStatusOcorrencia,
 
-    totalEntradas,
-    totalDividas,
+    competenciaAtual,
+    totalEntradasMes,
+    totalSaidasMes,
+    totalDividasMes,
+    saldoDisponivelMes,
   } = useFinance();
 
   // ==========================================================
@@ -93,10 +94,7 @@ export default function Inicio() {
 
   const cores = temaCores(modoEscuro);
 
-  const fundoIcone =
-    modoEscuro
-      ? "#2A2D33"
-      : "#F3F4F6";
+  const fundoIcone = cores.CARD;
 
   // ==========================================================
   // Mês atual
@@ -104,21 +102,11 @@ export default function Inicio() {
 
   const mesAtual = getMesAtualKey();
 
-  const agora = new Date();
-
-  const competenciaAtual =
-    `${agora.getFullYear()}-` +
-    `${String(
-      agora.getMonth() + 1,
-    ).padStart(2, "0")}`;
-
   // ==========================================================
   // Normalização da competência
   // ==========================================================
 
-  function normalizarCompetencia(
-    valor: string,
-  ) {
+  function normalizarCompetencia(valor: string) {
     if (!valor) {
       return "";
     }
@@ -140,62 +128,38 @@ export default function Inicio() {
   // Ocorrências das dívidas do mês atual
   // ==========================================================
 
-  const ocorrenciasMesAtual =
-    useMemo(() => {
-      return ocorrenciasDividas.filter(
-        (ocorrencia) =>
-          normalizarCompetencia(
-            ocorrencia.competencia,
-          ) === competenciaAtual,
-      );
-    }, [
-      ocorrenciasDividas,
-      competenciaAtual,
-    ]);
+  const ocorrenciasMesAtual = useMemo(() => {
+    return ocorrenciasDividas.filter(
+      (ocorrencia) =>
+        normalizarCompetencia(ocorrencia.competencia) === competenciaAtual,
+    );
+  }, [ocorrenciasDividas, competenciaAtual]);
 
   // ==========================================================
   // Status Pago / Pendente
   // ==========================================================
 
-  const statusDividas =
-    useMemo<
-      Record<string, boolean>
-    >(() => {
-      const status:
-        Record<string, boolean> =
-        {};
+  const statusDividas = useMemo<Record<string, boolean>>(() => {
+    const status: Record<string, boolean> = {};
 
-      ocorrenciasMesAtual.forEach(
-        (ocorrencia) => {
-          status[
-            ocorrencia.dividaId
-          ] =
-            ocorrencia.status ===
-            "pago";
-        },
-      );
+    ocorrenciasMesAtual.forEach((ocorrencia) => {
+      status[ocorrencia.dividaId] = ocorrencia.status === "pago";
+    });
 
-      return status;
-    }, [ocorrenciasMesAtual]);
+    return status;
+  }, [ocorrenciasMesAtual]);
 
   // ==========================================================
   // Alterar pagamento da dívida
   // ==========================================================
 
-  async function alterarPagamentoDivida(
-    dividaId: string,
-  ) {
+  async function alterarPagamentoDivida(dividaId: string) {
     try {
-      const ocorrencia =
-        ocorrenciasDividas.find(
-          (item) =>
-            item.dividaId ===
-              dividaId &&
-            normalizarCompetencia(
-              item.competencia,
-            ) ===
-              competenciaAtual,
-        );
+      const ocorrencia = ocorrenciasDividas.find(
+        (item) =>
+          item.dividaId === dividaId &&
+          normalizarCompetencia(item.competencia) === competenciaAtual,
+      );
 
       if (!ocorrencia) {
         console.warn(
@@ -208,11 +172,7 @@ export default function Inicio() {
         return;
       }
 
-      const novoStatus =
-        ocorrencia.status ===
-        "pago"
-          ? "pendente"
-          : "pago";
+      const novoStatus = ocorrencia.status === "pago" ? "pendente" : "pago";
 
       /*
        * O AppContext agora faz:
@@ -224,15 +184,9 @@ export default function Inicio() {
        * 5. Rollback em caso de erro
        */
 
-      await alterarStatusOcorrencia(
-        ocorrencia.id,
-        novoStatus,
-      );
+      await alterarStatusOcorrencia(ocorrencia.id, novoStatus);
     } catch (error) {
-      console.error(
-        "Erro ao alterar pagamento da dívida:",
-        error,
-      );
+      console.error("Erro ao alterar pagamento da dívida:", error);
     }
   }
 
@@ -240,64 +194,25 @@ export default function Inicio() {
   // Gastos do mês
   // ==========================================================
 
-  const gastosDoMes =
-    useMemo(
-      () =>
-        filtrarGastosDoMes(
-          transacoes,
-          mesAtual,
-        ),
-      [
-        transacoes,
-        mesAtual,
-      ],
-    );
+  const gastosDoMes = useMemo(
+    () => filtrarGastosDoMes(transacoes, mesAtual),
+    [transacoes, mesAtual],
+  );
 
-  const grupos =
-    useMemo(
-      () =>
-        agruparPorDia(
-          gastosDoMes,
-        ),
-      [gastosDoMes],
-    );
+  const grupos = useMemo(() => agruparPorDia(gastosDoMes), [gastosDoMes]);
 
-  const gruposLimitados =
-    useMemo(
-      () =>
-        limitarTransacoesDosGrupos(
-          grupos,
-          5,
-        ),
-      [grupos],
-    );
+  const gruposLimitados = useMemo(
+    () => limitarTransacoesDosGrupos(grupos, 5),
+    [grupos],
+  );
 
-  const quantidadeGastosMes =
-    gastosDoMes.length;
-
-  const totalSaidasMes =
-    useMemo(
-      () =>
-        somarGastos(
-          gastosDoMes,
-        ),
-      [gastosDoMes],
-    );
-
-  const saldoDisponivelMes =
-    totalEntradas -
-    totalSaidasMes -
-    totalDividas;
+  const quantidadeGastosMes = gastosDoMes.length;
 
   // ==========================================================
   // Gráfico
   // ==========================================================
 
-  const dadosGrafico =
-    useGraficoSaldo(
-      salarios,
-      transacoes,
-    );
+  const dadosGrafico = useGraficoSaldo(salarios, transacoes);
 
   // ==========================================================
   // Render
@@ -308,8 +223,7 @@ export default function Inicio() {
       style={[
         styles.screen,
         {
-          backgroundColor:
-            cores.BG,
+          backgroundColor: cores.BG,
         },
       ]}
     >
@@ -321,93 +235,32 @@ export default function Inicio() {
         visivel={modalFluxo}
         salarios={salarios}
         dividas={dividas}
-        onFechar={() =>
-          setModalFluxo(false)
-        }
+        onFechar={() => setModalFluxo(false)}
         onAbrirDividas={() => {
           setModalFluxo(false);
 
           setModalDividas(true);
         }}
-        onSalvarSalario={async (
-          id,
-          nome,
-          valor,
-        ) => {
-          try {
-            if (id) {
-              const atualizado =
-                await FinanceService
-                  .editarSalario({
-                    id,
-                    nome,
-                    valor,
-                    data:
-                      hojeISO(),
-                    responsavel:
-                      perfilAtual.id,
-                  });
-
-              setSalarios(
-                (prev) =>
-                  prev.map(
-                    (salario) =>
-                      salario.id ===
-                      id
-                        ? {
-                            ...atualizado,
-
-                            responsavel:
-                              perfilAtual.id,
-                          }
-                        : salario,
-                  ),
-              );
-
-              return;
-            }
-
-            /*
-             * Salário novo já possui
-             * atualização otimista.
-             */
-
-            void adicionarSalario({
+        onSalvarSalario={(id, nome, valor) => {
+          if (id) {
+            void editarSalario(id, {
               nome,
               valor,
-              data:
-                hojeISO(),
+              data: hojeISO(),
+              responsavel: perfilAtual.id,
             });
-          } catch (error) {
-            console.error(
-              "Erro ao salvar salário:",
-              error,
-            );
-          }
-        }}
-        onApagarSalario={async (
-          id,
-        ) => {
-          try {
-            await FinanceService
-              .excluirSalario(
-                id,
-              );
 
-            setSalarios(
-              (prev) =>
-                prev.filter(
-                  (salario) =>
-                    salario.id !==
-                    id,
-                ),
-            );
-          } catch (error) {
-            console.error(
-              "Erro ao excluir salário:",
-              error,
-            );
+            return;
           }
+
+          void adicionarSalario({
+            nome,
+            valor,
+            data: hojeISO(),
+          });
+        }}
+        onApagarSalario={(id) => {
+          void excluirSalario(id);
         }}
       />
 
@@ -418,24 +271,10 @@ export default function Inicio() {
       <CofrinhoModal
         visivel={modalCofrinho}
         valorAtual={cofrinho}
-        onFechar={() =>
-          setModalCofrinho(
-            false,
-          )
-        }
-        onSalvar={(
-          tipo,
-          valor,
-        ) => {
-          setCofrinho(
-            (prev) =>
-              tipo ===
-              "deposito"
-                ? prev + valor
-                : Math.max(
-                    0,
-                    prev - valor,
-                  ),
+        onFechar={() => setModalCofrinho(false)}
+        onSalvar={(tipo, valor) => {
+          setCofrinho((prev) =>
+            tipo === "deposito" ? prev + valor : Math.max(0, prev - valor),
           );
         }}
       />
@@ -447,79 +286,32 @@ export default function Inicio() {
       <DividasFixasModal
         visivel={modalDividas}
         dividas={dividas}
-        onFechar={() =>
-          setModalDividas(
-            false,
-          )
-        }
-
+        onFechar={() => setModalDividas(false)}
         // ====================================================
         // Criar / editar
         // ====================================================
 
-        onSalvar={async (
-          dados,
-          id,
-        ) => {
-          try {
-            if (id) {
-              await editarDivida(
-                id,
-                dados,
-              );
-
-              return;
-            }
-
-            await adicionarDivida(
-              dados,
-            );
-          } catch (error) {
-            console.error(
-              "Erro ao salvar dívida:",
-              error,
-            );
+        onSalvar={(dados, id) => {
+          if (id) {
+            void editarDivida(id, dados);
+            return;
           }
-        }}
 
+          void adicionarDivida(dados);
+        }}
         // ====================================================
         // Excluir
         // ====================================================
 
-        onExcluir={async (
-          id,
-        ) => {
-          try {
-            await excluirDivida(
-              id,
-            );
-          } catch (error) {
-            console.error(
-              "Erro ao excluir dívida:",
-              error,
-            );
-          }
+        onExcluir={(id) => {
+          void excluirDivida(id);
         }}
-
         // ====================================================
         // Ativar / desativar
         // ====================================================
 
-        onAlterarStatus={async (
-          id,
-          ativa,
-        ) => {
-          try {
-            await alterarStatusDivida(
-              id,
-              ativa,
-            );
-          } catch (error) {
-            console.error(
-              "Erro ao alterar status da dívida:",
-              error,
-            );
-          }
+        onAlterarStatus={(id, ativa) => {
+          void alterarStatusDivida(id, ativa);
         }}
       />
 
@@ -529,26 +321,10 @@ export default function Inicio() {
 
       <NovoGastoModal
         visivel={modalGasto}
-        onFechar={() =>
-          setModalGasto(false)
-        }
-        onSalvar={async (
-          transacao,
-        ) => {
-          try {
-            await adicionarTransacao(
-              transacao,
-            );
-
-            setModalGasto(
-              false,
-            );
-          } catch (error) {
-            console.error(
-              "Erro ao salvar transação:",
-              error,
-            );
-          }
+        onFechar={() => setModalGasto(false)}
+        onSalvar={(transacao) => {
+          setModalGasto(false);
+          void adicionarTransacao(transacao);
         }}
       />
 
@@ -557,28 +333,14 @@ export default function Inicio() {
       {/* ==================================================== */}
 
       <ConfiguracoesModal
-        visivel={
-          modalConfiguracoes
-        }
-        perfilAtual={
-          perfilAtual
-        }
-        modoEscuro={
-          modoEscuro
-        }
+        visivel={modalConfiguracoes}
+        perfilAtual={perfilAtual}
+        modoEscuro={modoEscuro}
         sincronizado
         sincronizando={false}
-        onFechar={() =>
-          setModalConfiguracoes(
-            false,
-          )
-        }
-        onTrocarPerfil={
-          trocarPerfil
-        }
-        onAlterarModoEscuro={
-          alterarModoEscuro
-        }
+        onFechar={() => setModalConfiguracoes(false)}
+        onTrocarPerfil={trocarPerfil}
+        onAlterarModoEscuro={alterarModoEscuro}
         onSincronizar={() => {}}
       />
 
@@ -587,34 +349,19 @@ export default function Inicio() {
       {/* ==================================================== */}
 
       <ScrollView
-        contentContainerStyle={
-          styles.content
-        }
-        showsVerticalScrollIndicator={
-          false
-        }
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
       >
         {/* ================================================== */}
         {/* HEADER */}
         {/* ================================================== */}
 
         <InicioHeader
-          nomePerfil={
-            perfilAtual.nome
-          }
+          nomePerfil={perfilAtual.nome}
           oculto={oculto}
           cores={cores}
-          onAlternarOculto={() =>
-            setOculto(
-              (valor) =>
-                !valor,
-            )
-          }
-          onAbrirConfiguracoes={() =>
-            setModalConfiguracoes(
-              true,
-            )
-          }
+          onAlternarOculto={() => setOculto((valor) => !valor)}
+          onAbrirConfiguracoes={() => setModalConfiguracoes(true)}
         />
 
         {/* ================================================== */}
@@ -625,28 +372,12 @@ export default function Inicio() {
           cores={cores}
           oculto={oculto}
           cofrinho={cofrinho}
-          totalEntradas={
-            totalEntradas
-          }
-          totalDividas={
-            totalDividas
-          }
-          totalSaidasMes={
-            totalSaidasMes
-          }
-          saldoDisponivelMes={
-            saldoDisponivelMes
-          }
-          onAbrirCofrinho={() =>
-            setModalCofrinho(
-              true,
-            )
-          }
-          onAbrirFluxo={() =>
-            setModalFluxo(
-              true,
-            )
-          }
+          totalEntradas={totalEntradasMes}
+          totalDividas={totalDividasMes}
+          totalSaidasMes={totalSaidasMes}
+          saldoDisponivelMes={saldoDisponivelMes}
+          onAbrirCofrinho={() => setModalCofrinho(true)}
+          onAbrirFluxo={() => setModalFluxo(true)}
         />
 
         {/* ================================================== */}
@@ -656,9 +387,7 @@ export default function Inicio() {
         <SaldoMesCard
           cores={cores}
           oculto={oculto}
-          saldoDisponivelMes={
-            saldoDisponivelMes
-          }
+          saldoDisponivelMes={saldoDisponivelMes}
         />
 
         {/* ================================================== */}
@@ -667,29 +396,13 @@ export default function Inicio() {
 
         <GastosMesCard
           cores={cores}
-          fundoIcone={
-            fundoIcone
-          }
+          fundoIcone={fundoIcone}
           oculto={oculto}
-          modoEscuro={
-            modoEscuro
-          }
-          quantidadeGastosMes={
-            quantidadeGastosMes
-          }
-          ultimoGasto={
-            gastosDoMes[0]
-          }
-          onAdicionarGasto={() =>
-            setModalGasto(
-              true,
-            )
-          }
-          onVerTodas={() =>
-            navigation.navigate(
-              "Historico",
-            )
-          }
+          modoEscuro={modoEscuro}
+          quantidadeGastosMes={quantidadeGastosMes}
+          ultimoGasto={gastosDoMes[0]}
+          onAdicionarGasto={() => setModalGasto(true)}
+          onVerTodas={() => navigation.navigate("Historico")}
         />
 
         {/* ================================================== */}
@@ -698,21 +411,11 @@ export default function Inicio() {
 
         <DividasFixasCard
           cores={cores}
-          modoEscuro={
-            modoEscuro
-          }
+          modoEscuro={modoEscuro}
           dividas={dividas}
-          statusPagamentos={
-            statusDividas
-          }
-          onAlterarPagamento={
-            alterarPagamentoDivida
-          }
-          onVerMais={() =>
-            setModalDividas(
-              true,
-            )
-          }
+          statusPagamentos={statusDividas}
+          onAlterarPagamento={alterarPagamentoDivida}
+          onVerMais={() => setModalDividas(true)}
         />
 
         {/* ================================================== */}
@@ -721,9 +424,7 @@ export default function Inicio() {
 
         <GraficoCard
           cores={cores}
-          dadosGrafico={
-            dadosGrafico
-          }
+          dadosGrafico={dadosGrafico}
           oculto={oculto}
         />
 
@@ -732,17 +433,11 @@ export default function Inicio() {
         {/* ================================================== */}
 
         <ListaGastosRecentes
-          grupos={
-            gruposLimitados
-          }
+          grupos={gruposLimitados}
           cores={cores}
-          fundoIcone={
-            fundoIcone
-          }
+          fundoIcone={fundoIcone}
           oculto={oculto}
-          modoEscuro={
-            modoEscuro
-          }
+          modoEscuro={modoEscuro}
         />
       </ScrollView>
     </SafeAreaView>
