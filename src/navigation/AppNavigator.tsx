@@ -3,11 +3,13 @@ import { createStackNavigator } from "@react-navigation/stack";
 
 import Inicio from "../screens/Inicio";
 import Historico from "../screens/Historico";
+import DividasFixas from "../screens/DividasFixas";
 import { defaultScreenOptions } from "./options";
 
 export type RootStackParamList = {
   Home: undefined;
   Historico: undefined;
+  DividasFixas: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -19,9 +21,9 @@ export default function AppNavigator() {
         initialRouteName="Home"
         screenOptions={defaultScreenOptions}
       >
-        <Stack.Screen
-          name="Home"
-          component={Inicio}
+        <Stack.Screen 
+          name="Home" 
+          component={Inicio} 
         />
 
         <Stack.Screen
@@ -30,6 +32,11 @@ export default function AppNavigator() {
           options={{
             gestureEnabled: false,
           }}
+        />
+
+        <Stack.Screen 
+          name="DividasFixas" 
+          component={DividasFixas} 
         />
       </Stack.Navigator>
     </NavigationContainer>

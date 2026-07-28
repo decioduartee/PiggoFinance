@@ -4,13 +4,13 @@
     "slug": "piggo-finance",
     "version": "0.1.0",
     "orientation": "portrait",
-    "icon": "./src/assets/icon.png",
+    "icon": "./src/assets/icon-legacy.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./src/assets/splash-icon.png",
+      "image": "./src/assets/logo-porquinho.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#92C62A"
     },
     "ios": {
       "supportsTablet": true,
@@ -19,15 +19,15 @@
     "android": {
       "package": "com.decioduarte.piggo",
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/adaptive-icon.jpeg",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./src/assets/icon-foreground.png",
+        "backgroundColor": "#92C62A",
+        "monochromeImage": "./src/assets/icon-monochrome.png"
       },
+      "icon": "./src/assets/icon-legacy.png",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
-    "plugins": [
-      "@react-native-community/datetimepicker"
-    ],
+    "plugins": ["@react-native-community/datetimepicker"],
     "extra": {
       "eas": {
         "projectId": "1581e42a-c7b5-4101-9df0-70b121d69e6c"

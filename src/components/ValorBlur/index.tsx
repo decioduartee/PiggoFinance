@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  Platform,
-  Text,
-  TextStyle,
-  View,
-} from "react-native";
+import { Platform, Text, TextStyle, View } from "react-native";
 import { BlurView } from "expo-blur";
 
 import useFinance from "../../hooks/useFinance";
@@ -32,9 +27,7 @@ export default function Valor({
   const corFinal = cor ?? (valor < 0 || negativo ? CORAL : LIME_DARK);
 
   const texto =
-    negativo && valor > 0
-      ? `- ${fmt(valor).replace("-", "")}`
-      : fmt(valor);
+    negativo && valor > 0 ? `- ${fmt(valor).replace("-", "")}` : fmt(valor);
 
   return (
     <View
@@ -47,9 +40,7 @@ export default function Valor({
         },
       ]}
     >
-      <Text style={[styles.texto, { color: corFinal }, style]}>
-        {texto}
-      </Text>
+      <Text style={[styles.texto, { color: corFinal }, style]}>{texto}</Text>
 
       {oculto && (
         <BlurView

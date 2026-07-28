@@ -367,27 +367,64 @@ export function DividasFixasCard({
         </Text>
       </View>
 
-      {dividasVisiveis.map((divida, index) => {
+      {dividasVisiveis.map((divida) => {
         const pago = Boolean(statusPagamentos[divida.id]);
         const corStatus = pago ? LIME_DARK : PURPLE;
         const atualizando = dividasAtualizando.has(divida.id);
 
+        const estiloStatus = [
+          styles.dividaStatus,
+          {
+            backgroundColor: corStatus,
+            borderColor: corStatus,
+          },
+        ];
+
+        const textoStatus = [
+          styles.dividaStatusTexto,
+          {
+            color: "#FFFFFF",
+          },
+        ];
+
         return (
           <View
             key={divida.id}
-            style={[styles.dividaItem, { backgroundColor: cores.SUB_CARD }]}
+            style={[
+              styles.dividaItem,
+              {
+                backgroundColor: cores.SUB_CARD,
+              },
+            ]}
           >
-            <View style={[styles.dividaIcone, { backgroundColor: cores.CARD }]}>
-              <Send size={17} strokeWidth={2} color={pago ? LIME_DARK : PURPLE} />
+            <View
+              style={[
+                styles.dividaIcone,
+                {
+                  backgroundColor: cores.CARD,
+                },
+              ]}
+            >
+              <Send
+                size={17}
+                strokeWidth={2}
+                color={pago ? LIME_DARK : PURPLE}
+              />
             </View>
 
             <View style={styles.dividaConteudo}>
               <Text
                 numberOfLines={1}
-                style={[styles.dividaNome, { color: cores.INK }]}
+                style={[
+                  styles.dividaNome,
+                  {
+                    color: cores.INK,
+                  },
+                ]}
               >
                 {divida.nome}
               </Text>
+
               <Valor
                 valor={Math.abs(Number(divida.valor) || 0)}
                 oculto={oculto}
@@ -395,35 +432,28 @@ export function DividasFixasCard({
                 style={styles.dividaValor}
               />
             </View>
-            <TouchableOpacity
-              activeOpacity={0.75}
-              onPress={() => onAlterarPagamento(divida.id)}
-              style={[
-                styles.dividaStatus,
-                modoEscuro
-                  ? {
-                      // Tema escuro: mantém como está
-                      backgroundColor: "transparent",
-                      borderColor: corStatus,
-                    }
-                  : {
-                      // Tema claro: fundo recebe a cor do status
-                      backgroundColor: corStatus,
-                      borderColor: corStatus,
-                    },
-              ]}
-            >
-              <Text
+
+            {pago ? (
+              <View style={estiloStatus}>
+                <Text style={textoStatus}>Pago</Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                activeOpacity={0.75}
+                disabled={atualizando}
+                onPress={() => onAlterarPagamento(divida.id)}
                 style={[
-                  styles.dividaStatusTexto,
+                  ...estiloStatus,
                   {
-                    color: modoEscuro ? corStatus : "#FFFFFF",
+                    opacity: atualizando ? 0.55 : 1,
                   },
                 ]}
               >
-                {pago ? "Pago" : "Pendente"}
-              </Text>
-            </TouchableOpacity>
+                <Text style={textoStatus}>
+                  {atualizando ? "Salvando..." : "Pendente"}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         );
       })}

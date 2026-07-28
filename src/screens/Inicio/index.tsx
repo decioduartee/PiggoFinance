@@ -436,7 +436,7 @@ export default function Inicio() {
           statusPagamentos={statusDividas}
           dividasAtualizando={dividasAtualizando}
           onAlterarPagamento={alterarPagamentoDivida}
-          onVerMais={() => setModalDividas(true)}
+          onVerMais={() => navigation.navigate("DividasFixas")}
         />
 
         {/* ================================================== */}
