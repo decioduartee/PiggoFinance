@@ -21,7 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import type { OcorrenciaDivida } from "../../features/financas";
 import useFinance from "../../hooks/useFinance";
-import { LIME, temaCores, PURPLE } from "../../theme/colors";
+import { temaCores } from "../../theme/colors";
 
 import { CardResumo, LinhaDivida } from "./components";
 import { createStyles } from "./styles";
@@ -31,8 +31,10 @@ import {
   hojeISO,
   montarDividasDoMes,
   numeroParcelaDaCompetencia,
+  ocorrenciaEstaPaga,
   ordenarDividas,
   pesquisarDividas,
+  valorDaDivida,
   type ItemDivida,
   type Ordem,
 } from "./utils";
@@ -103,13 +105,9 @@ export default function DividasFixas() {
   const resumo = useMemo(() => {
     return itensDoMes.reduce(
       (totais, item) => {
-        const valor = Math.abs(
-          Number(
-            (item.ocorrencia as any).valor ?? (item.divida as any).valor,
-          ) || 0,
-        );
+        const valor = valorDaDivida(item);
 
-        if ((item.ocorrencia as any).status === "pago") {
+        if (ocorrenciaEstaPaga(item.ocorrencia)) {
           totais.pago += valor;
           totais.quantidadePagas += 1;
         } else {
@@ -146,13 +144,10 @@ export default function DividasFixas() {
       id: item.prevista ? gerarIdOcorrencia() : item.ocorrencia.id,
       dividaId: item.divida.id,
       competencia: competenciaAtual,
-      valor: Math.abs(
-        Number((item.ocorrencia as any).valor ?? (item.divida as any).valor) ||
-          0,
-      ),
+      valor: valorDaDivida(item),
       status: novoStatus,
       pagoEm: novoStatus === "pago" ? hojeISO() : "",
-    } as OcorrenciaDivida;
+    };
 
     try {
       // A primeira alteração de uma previsão cria uma ocorrência real.
@@ -216,14 +211,14 @@ export default function DividasFixas() {
   }
 
   function alternarStatus(item: ItemDivida) {
-    const pago = (item.ocorrencia as any).status === "pago";
+    const pago = ocorrenciaEstaPaga(item.ocorrencia);
 
     // Se já está paga, não faz nada.
     if (pago) return;
 
     Alert.alert(
       "Marcar como paga",
-      `Deseja marcar “${(item.divida as any).nome}” como paga?`,
+      `Deseja marcar “${item.divida.nome}” como paga?`,
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -335,28 +330,24 @@ export default function DividasFixas() {
             <Text style={styles.grupoTitulo}>{grupo.titulo}</Text>
 
             {grupo.itens.map((item, indice) => {
-              const pago = (item.ocorrencia as any).status === "pago";
-              const valor = Math.abs(
-                Number(
-                  (item.ocorrencia as any).valor ?? (item.divida as any).valor,
-                ) || 0,
-              );
+              const pago = ocorrenciaEstaPaga(item.ocorrencia);
+              const valor = valorDaDivida(item);
 
               return (
                 <React.Fragment key={item.id}>
                   <LinhaDivida
                     divida={item.divida}
                     valor={valor}
-                    numeroParcela={
-                      (item.ocorrencia as any).numeroParcela ??
-                      numeroParcelaDaCompetencia(item.divida, competenciaAtual)
-                    }
                     pago={pago}
                     oculto={oculto}
                     atualizando={atualizando.has(item.divida.id)}
                     onPressStatus={() => alternarStatus(item)}
                     cores={cores}
                     styles={styles}
+                    numeroParcela={
+                      item.ocorrencia.numeroParcela ??
+                      numeroParcelaDaCompetencia(item.divida, competenciaAtual)
+                    }
                   />
 
                   {indice < grupo.itens.length - 1 ? (

@@ -8,6 +8,10 @@ import type {
   OcorrenciaDivida,
 } from "../features/financas";
 
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
+type RequestBody = Record<string, JsonValue | undefined>;
+
 function getBaseUrl() {
   if (!API.BASE_URL) {
     throw new Error("Configure EXPO_PUBLIC_API_BASE_URL no arquivo .env");
@@ -48,7 +52,7 @@ async function get(resource: string, id?: string) {
 // POST
 // ======================================================
 
-async function post(resource: string, body: any) {
+async function post(resource: string, body: RequestBody) {
   const baseUrl = getBaseUrl();
 
   const response = await fetch(

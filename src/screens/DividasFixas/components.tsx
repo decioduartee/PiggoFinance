@@ -4,7 +4,11 @@ import { CheckCircle2, ClockAlert, Repeat2 } from "lucide-react-native";
 import { LIME, PURPLELIGHT, PURPLE, CORAL } from "../../theme/colors";
 import ValorBlur from "../../components/ValorBlur";
 import type { Divida } from "../../features/financas";
+import type { ThemeColors } from "../../theme";
+import type { createStyles } from "./styles";
 import { dividaParcelada, totalParcelas } from "./utils";
+
+type DividasStyles = ReturnType<typeof createStyles>;
 
 export function CardResumo({
   tipo,
@@ -14,7 +18,15 @@ export function CardResumo({
   oculto,
   cores,
   styles,
-}: any) {
+}: {
+  tipo: "pago" | "pendente";
+  titulo: string;
+  valor: number;
+  quantidade: number;
+  oculto: boolean;
+  cores: ThemeColors;
+  styles: DividasStyles;
+}) {
   const pago = tipo === "pago";
 
   return (
@@ -68,8 +80,8 @@ export function LinhaDivida({
   oculto: boolean;
   atualizando: boolean;
   onPressStatus: () => void;
-  cores: any;
-  styles: any;
+  cores: ThemeColors;
+  styles: DividasStyles;
 }) {
   const parcelada = dividaParcelada(divida);
   const total = totalParcelas(divida);
@@ -85,7 +97,7 @@ export function LinhaDivida({
           numberOfLines={1}
           style={[styles.nomeDivida, { color: cores.INK }]}
         >
-          {(divida as any).nome}
+          {divida.nome}
         </Text>
 
         <ValorBlur

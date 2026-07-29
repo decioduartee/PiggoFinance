@@ -36,8 +36,8 @@ export function gerarIdOcorrencia() {
 
 export function normalizarDiaVencimento(divida: Divida) {
   const valor =
-    Number((divida as any).vencimento) ||
-    Number((divida as any).diaVencimento) ||
+    Number(divida.vencimento) ||
+    Number(divida.diaVencimento) ||
     1;
 
   return Math.min(Math.max(valor, 1), 31);
@@ -63,7 +63,7 @@ export function numeroParcelaDaCompetencia(
   divida: Divida,
   competencia: string,
 ) {
-  const inicio = chaveMes((divida as any).inicio);
+  const inicio = chaveMes(divida.inicio);
   if (!inicio) return undefined;
 
   const [anoInicio, mesInicio] = inicio.split("-").map(Number);
@@ -79,16 +79,16 @@ export function numeroParcelaDaCompetencia(
 
 export function totalParcelas(divida: Divida) {
   return (
-    Number((divida as any).parcelas) ||
-    Number((divida as any).totalParcelas) ||
+    Number(divida.parcelas) ||
+    Number(divida.totalParcelas) ||
     0
   );
 }
 
 export function dividaParcelada(divida: Divida) {
   return (
-    (divida as any).tipo === "parcelada" ||
-    Boolean((divida as any).parcelada)
+    divida.tipo === "parcelada" ||
+    Boolean(divida.parcelada)
   );
 }
 
@@ -105,20 +105,20 @@ export function criarOcorrenciaPendente(
     dividaId: divida.id,
     competencia,
     vencimento: dataVencimentoDaCompetencia(competencia, divida),
-    valor: Math.abs(Number((divida as any).valor) || 0),
+    valor: Math.abs(Number(divida.valor) || 0),
     status: "pendente",
     pagoEm: "",
     ...(numeroParcela ? { numeroParcela } : {}),
-  } as OcorrenciaDivida;
+  };
 }
 
 export function dividaValidaNaCompetencia(
   divida: Divida,
   competencia: string,
 ) {
-  if ((divida as any).ativa === false) return false;
+  if (divida.ativa === false) return false;
 
-  const inicio = chaveMes((divida as any).inicio);
+  const inicio = chaveMes(divida.inicio);
   if (inicio && competencia < inicio) return false;
 
   if (!dividaParcelada(divida)) return true;
@@ -152,7 +152,7 @@ export function montarDividasDoMes({
       const ocorrencia = real ?? criarOcorrenciaPendente(divida, competencia);
       const prevista = !real;
       const data =
-        (ocorrencia as any).vencimento ||
+        ocorrencia.vencimento ||
         dataVencimentoDaCompetencia(competencia, divida);
 
       return {
@@ -172,10 +172,10 @@ export function pesquisarDividas(lista: ItemDivida[], texto: string) {
   const buscaValor = busca.replace(".", ",");
 
   return lista.filter(({ divida, ocorrencia }) => {
-    const nome = String((divida as any).nome ?? "").toLowerCase();
-    const status = String((ocorrencia as any).status ?? "").toLowerCase();
+    const nome = String(divida.nome ?? "").toLowerCase();
+    const status = String(ocorrencia.status ?? "").toLowerCase();
     const tipo = dividaParcelada(divida) ? "parcela" : "recorrente";
-    const valor = Math.abs(Number((ocorrencia as any).valor ?? (divida as any).valor) || 0)
+    const valor = valorDaDivida({ divida, ocorrencia })
       .toLocaleString("pt-BR", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -198,11 +198,22 @@ export function ordenarDividas(lista: ItemDivida[], ordem: Ordem) {
       return ordem === "recentes" ? -comparacao : comparacao;
     }
 
-    return String((a.divida as any).nome ?? "").localeCompare(
-      String((b.divida as any).nome ?? ""),
+    return String(a.divida.nome ?? "").localeCompare(
+      String(b.divida.nome ?? ""),
       "pt-BR",
     );
   });
+}
+
+export function valorDaDivida({
+  divida,
+  ocorrencia,
+}: Pick<ItemDivida, "divida" | "ocorrencia">) {
+  return Math.abs(Number(ocorrencia.valor ?? divida.valor) || 0);
+}
+
+export function ocorrenciaEstaPaga(ocorrencia: OcorrenciaDivida) {
+  return ocorrencia.status === "pago";
 }
 
 export function rotuloVencimento(data: string) {

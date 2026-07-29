@@ -76,6 +76,10 @@ export interface Divida
   extends NovaDivida {
   id: string;
 
+  diaVencimento?: number | string;
+  totalParcelas?: number | string;
+  parcelada?: boolean;
+
   criadoEm?: string;
   atualizadoEm?: string;
 }
