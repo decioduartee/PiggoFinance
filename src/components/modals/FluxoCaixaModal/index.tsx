@@ -12,11 +12,13 @@ import {
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   ChevronRight,
   Plus,
   FileText,
 } from "lucide-react-native";
+import ConfirmacaoAlert from "../../ConfirmacaoAlert";
 import SwipeAction from "../../SwipeAction";
 import { LIME, PURPLE, temaCores } from "../../../theme/colors";
 import useFinance from "../../../hooks/useFinance";
@@ -63,6 +65,9 @@ export default function FluxoCaixaModal({
   const [idEdicao, setIdEdicao] = useState<string | null>(null);
   const [nome, setNome] = useState("");
   const [valor, setValor] = useState("");
+  const [salarioExcluindo, setSalarioExcluindo] = useState<Salario | null>(
+    null,
+  );
 
   const { modoEscuro } = useFinance();
   const cores = temaCores(modoEscuro);
@@ -82,6 +87,7 @@ export default function FluxoCaixaModal({
     setIdEdicao(null);
     setNome("");
     setValor("");
+    setSalarioExcluindo(null);
   }
 
   function fechar() {
@@ -132,22 +138,23 @@ export default function FluxoCaixaModal({
       statusBarTranslucent
       onRequestClose={fechar}
     >
-      <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={fechar} />
+      <GestureHandlerRootView style={styles.gestureRoot}>
+        <View style={styles.overlay}>
+          <Pressable style={styles.backdrop} onPress={fechar} />
 
-        <KeyboardAvoidingView
-          style={styles.modalWrapper}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
-          <View style={styles.modal}>
-            <KeyboardAwareScrollView
-              enableOnAndroid
-              enableAutomaticScroll
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.scroll}
-            >
-              <Text style={styles.titulo}>Fluxo de Caixa</Text>
+          <KeyboardAvoidingView
+            style={styles.modalWrapper}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+          >
+            <View style={styles.modal}>
+              <KeyboardAwareScrollView
+                enableOnAndroid
+                enableAutomaticScroll
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scroll}
+              >
+                <Text style={styles.titulo}>Fluxo de Caixa</Text>
 
             <Text style={styles.section}>Salários cadastrados</Text>
 
@@ -161,7 +168,7 @@ export default function FluxoCaixaModal({
               <SwipeAction
                 key={item.id}
                 onEdit={() => editar(item)}
-                onDelete={() => onApagarSalario(item.id)}
+                onDelete={() => setSalarioExcluindo(item)}
               >
                 <TouchableOpacity
                   activeOpacity={0.9}
@@ -247,10 +254,25 @@ export default function FluxoCaixaModal({
             >
               <Text style={styles.botaoFecharTexto}>Cancelar</Text>
             </TouchableOpacity>
-            </KeyboardAwareScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </View>
+              </KeyboardAwareScrollView>
+            </View>
+          </KeyboardAvoidingView>
+
+          <ConfirmacaoAlert
+            visivel={Boolean(salarioExcluindo)}
+            tipo="danger"
+            titulo="Excluir salário"
+            mensagem={`Deseja realmente excluir "${salarioExcluindo?.nome ?? "este salário"}"?`}
+            textoConfirmar="Excluir"
+            onCancelar={() => setSalarioExcluindo(null)}
+            onConfirmar={() => {
+              if (salarioExcluindo) {
+                onApagarSalario(salarioExcluindo.id);
+              }
+            }}
+          />
+        </View>
+      </GestureHandlerRootView>
     </Modal>
   );
 }

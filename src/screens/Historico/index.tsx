@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 
 import {
-  Alert,
   FlatList,
   Text,
   TextInput,
@@ -25,6 +24,7 @@ import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import Valor from "../../components/ValorBlur";
+import ConfirmacaoAlert from "../../components/ConfirmacaoAlert";
 import NovoGastoModal from "../../components/modals/NovoGastoModal";
 import type {
   Divida,
@@ -189,6 +189,8 @@ export default function Historico() {
   const [oculto, setOculto] = useState(false);
   const [modalEditar, setModalEditar] = useState(false);
   const [movimentacaoEditando, setMovimentacaoEditando] =
+    useState<Transacao | null>(null);
+  const [movimentacaoExcluindo, setMovimentacaoExcluindo] =
     useState<Transacao | null>(null);
   const [ordem, setOrdem] = useState<Ordem>("recentes");
   const [mesSelecionado, setMesSelecionado] = useState<string | null>(null);
@@ -671,20 +673,17 @@ export default function Historico() {
   function excluir(id: string) {
     if (id.includes("TEMP_")) return;
 
-    Alert.alert(
-      "Excluir movimentação",
-      "Deseja realmente excluir esta movimentação?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Excluir",
-          style: "destructive",
-          onPress: () => {
-            void excluirTransacao(id);
-          },
-        },
-      ],
-    );
+    const transacao = transacoes.find((item) => item.id === id);
+
+    if (!transacao) return;
+
+    setMovimentacaoExcluindo(transacao);
+  }
+
+  function confirmarExclusaoMovimentacao() {
+    if (!movimentacaoExcluindo) return;
+
+    void excluirTransacao(movimentacaoExcluindo.id);
   }
 
   const gruposLista = useMemo(
@@ -846,6 +845,16 @@ export default function Historico() {
           setMovimentacaoEditando(null);
           void editarTransacao(nova);
         }}
+      />
+
+      <ConfirmacaoAlert
+        visivel={Boolean(movimentacaoExcluindo)}
+        tipo="danger"
+        titulo="Excluir movimentação"
+        mensagem="Deseja realmente excluir esta movimentação?"
+        textoConfirmar="Excluir"
+        onCancelar={() => setMovimentacaoExcluindo(null)}
+        onConfirmar={confirmarExclusaoMovimentacao}
       />
 
       <FlatList

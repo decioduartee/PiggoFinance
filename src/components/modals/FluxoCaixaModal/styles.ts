@@ -7,6 +7,10 @@ export const createStyles = (
   bottomInset = 0,
 ) =>
   StyleSheet.create({
+    gestureRoot: {
+      flex: 1,
+    },
+
     overlay: {
       flex: 1,
       backgroundColor: "rgba(0,0,0,.35)",

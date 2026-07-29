@@ -17,8 +17,10 @@ import {
 import { CreditCard, Repeat } from "lucide-react-native";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import useFinance from "../../../hooks/useFinance";
+import ConfirmacaoAlert from "../../ConfirmacaoAlert";
 import SwipeAction from "../../SwipeAction";
 
 import type { Divida, NovaDivida } from "../../../features/financas/types";
@@ -172,6 +174,8 @@ export default function DividasFixasModal({
 
   const [vencimento, setVencimento] = useState("");
 
+  const [dividaExcluindo, setDividaExcluindo] = useState<Divida | null>(null);
+
   // ========================================================
   // ESTADO DA EDIÇÃO
   // ========================================================
@@ -219,6 +223,8 @@ export default function DividasFixasModal({
     setInicio("");
 
     setVencimento("");
+
+    setDividaExcluindo(null);
   }
 
   // ========================================================
@@ -500,19 +506,20 @@ export default function DividasFixasModal({
       statusBarTranslucent
       onRequestClose={fechar}
     >
-      <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={fechar} />
+      <GestureHandlerRootView style={styles.gestureRoot}>
+        <View style={styles.overlay}>
+          <Pressable style={styles.backdrop} onPress={fechar} />
 
-        <KeyboardAvoidingView
-          style={styles.modalWrapper}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
-          <View style={styles.modal}>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={styles.scroll}
-            >
+          <KeyboardAvoidingView
+            style={styles.modalWrapper}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+          >
+            <View style={styles.modal}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={styles.scroll}
+              >
               {/* =========================================== */}
               {/* TÍTULO */}
               {/* =========================================== */}
@@ -619,7 +626,7 @@ export default function DividasFixasModal({
                   <SwipeAction
                     key={item.id}
                     onEdit={() => editar(item)}
-                    onDelete={() => excluir(item)}
+                    onDelete={() => setDividaExcluindo(item)}
                   >
                     {card}
                   </SwipeAction>
@@ -823,10 +830,25 @@ export default function DividasFixasModal({
               >
                 <Text style={styles.botaoFecharTexto}>Cancelar</Text>
               </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </View>
+              </ScrollView>
+            </View>
+          </KeyboardAvoidingView>
+
+          <ConfirmacaoAlert
+            visivel={Boolean(dividaExcluindo)}
+            tipo="danger"
+            titulo="Excluir dívida"
+            mensagem={`Deseja realmente excluir "${dividaExcluindo?.nome ?? "esta dívida"}"?`}
+            textoConfirmar="Excluir"
+            onCancelar={() => setDividaExcluindo(null)}
+            onConfirmar={() => {
+              if (dividaExcluindo) {
+                excluir(dividaExcluindo);
+              }
+            }}
+          />
+        </View>
+      </GestureHandlerRootView>
     </Modal>
   );
 }

@@ -2,7 +2,6 @@
 
 import React, { useMemo, useState } from "react";
 import {
-  Alert,
   FlatList,
   Text,
   TextInput,
@@ -19,6 +18,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import ConfirmacaoAlert from "../../components/ConfirmacaoAlert";
 import useFinance from "../../hooks/useFinance";
 import { temaCores } from "../../theme/colors";
 
@@ -46,6 +46,9 @@ export default function DividasFixas() {
   const [oculto, setOculto] = useState(false);
   const [ordem, setOrdem] = useState<Ordem>("antigos");
   const [atualizando, setAtualizando] = useState<Set<string>>(() => new Set());
+  const [dividaConfirmandoPagamento, setDividaConfirmandoPagamento] =
+    useState<ItemDivida | null>(null);
+  const [erroAtualizacao, setErroAtualizacao] = useState(false);
 
   const { dividas, ocorrenciasDividas, competenciaAtual, modoEscuro } = finance;
 
@@ -118,10 +121,7 @@ export default function DividasFixas() {
     } catch (erro) {
       console.error("Erro ao alterar status da dívida:", erro);
 
-      Alert.alert(
-        "Não foi possível atualizar",
-        "Confira a conexão com o Google Sheets e tente novamente.",
-      );
+      setErroAtualizacao(true);
     } finally {
       setTimeout(() => {
         setAtualizando((estado) => {
@@ -139,17 +139,13 @@ export default function DividasFixas() {
     // Se já está paga, não faz nada.
     if (pago) return;
 
-    Alert.alert(
-      "Marcar como paga",
-      `Deseja marcar “${item.divida.nome}” como paga?`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Confirmar",
-          onPress: () => void marcarComoPago(item),
-        },
-      ],
-    );
+    setDividaConfirmandoPagamento(item);
+  }
+
+  function confirmarPagamento() {
+    if (!dividaConfirmandoPagamento) return;
+
+    void marcarComoPago(dividaConfirmandoPagamento);
   }
 
   const header = (
@@ -234,6 +230,24 @@ export default function DividasFixas() {
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.screen}>
+      <ConfirmacaoAlert
+        visivel={Boolean(dividaConfirmandoPagamento)}
+        tipo="success"
+        titulo="Marcar como paga"
+        mensagem={`Deseja marcar "${dividaConfirmandoPagamento?.divida.nome ?? "esta dívida"}" como paga?`}
+        onCancelar={() => setDividaConfirmandoPagamento(null)}
+        onConfirmar={confirmarPagamento}
+      />
+
+      <ConfirmacaoAlert
+        visivel={erroAtualizacao}
+        tipo="info"
+        titulo="Não foi possível atualizar"
+        mensagem="Confira a conexão com o Google Sheets e tente novamente."
+        textoCancelar="Entendi"
+        onCancelar={() => setErroAtualizacao(false)}
+      />
+
       <FlatList
         data={grupos}
         keyExtractor={(grupo) => grupo.data}

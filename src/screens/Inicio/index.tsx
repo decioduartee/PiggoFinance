@@ -5,6 +5,7 @@ import { temaCores } from "../../theme/colors";
 import { getMesAtualKey, hojeISO } from "../../utils/formatadores";
 import { SafeAreaView } from "react-native-safe-area-context";
 import useFinance from "../../hooks/useFinance";
+import ConfirmacaoAlert from "../../components/ConfirmacaoAlert";
 import NovoGastoModal from "../../components/modals/NovoGastoModal";
 import FluxoCaixaModal from "../../components/modals/FluxoCaixaModal";
 import CofrinhoModal from "../../components/modals/CofrinhoModal";
@@ -46,6 +47,8 @@ export default function Inicio() {
   const [modalCofrinho, setModalCofrinho] = useState(false);
   const [modalDividas, setModalDividas] = useState(false);
   const [modalConfiguracoes, setModalConfiguracoes] = useState(false);
+  const [dividaConfirmandoPagamentoId, setDividaConfirmandoPagamentoId] =
+    useState<string | null>(null);
   const [dividasAtualizando, setDividasAtualizando] = useState<Set<string>>(
     () => new Set(),
   );
@@ -148,6 +151,13 @@ export default function Inicio() {
     return status;
   }, [ocorrenciasMesAtual]);
 
+  const dividaConfirmandoPagamento = useMemo(
+    () =>
+      dividas.find((divida) => divida.id === dividaConfirmandoPagamentoId) ??
+      null,
+    [dividas, dividaConfirmandoPagamentoId],
+  );
+
   // ==========================================================
   // Alterar pagamento da dívida
   // ==========================================================
@@ -210,6 +220,28 @@ export default function Inicio() {
         });
       }, 400);
     }
+  }
+
+  function solicitarPagamentoDivida(dividaId: string) {
+    if (dividasAtualizando.has(dividaId) || statusDividas[dividaId]) {
+      return;
+    }
+
+    const divida = dividas.find((item) => item.id === dividaId);
+
+    if (!divida) {
+      return;
+    }
+
+    setDividaConfirmandoPagamentoId(divida.id);
+  }
+
+  function confirmarPagamentoDivida() {
+    if (!dividaConfirmandoPagamentoId) {
+      return;
+    }
+
+    void alterarPagamentoDivida(dividaConfirmandoPagamentoId);
   }
 
   // ==========================================================
@@ -376,6 +408,15 @@ export default function Inicio() {
         onSincronizar={() => {}}
       />
 
+      <ConfirmacaoAlert
+        visivel={Boolean(dividaConfirmandoPagamento)}
+        tipo="success"
+        titulo="Marcar como paga"
+        mensagem={`Deseja marcar "${dividaConfirmandoPagamento?.nome ?? "esta dívida"}" como paga?`}
+        onCancelar={() => setDividaConfirmandoPagamentoId(null)}
+        onConfirmar={confirmarPagamentoDivida}
+      />
+
       {/* ==================================================== */}
       {/* CONTEÚDO */}
       {/* ==================================================== */}
@@ -448,7 +489,7 @@ export default function Inicio() {
           dividas={dividas}
           statusPagamentos={statusDividas}
           dividasAtualizando={dividasAtualizando}
-          onAlterarPagamento={alterarPagamentoDivida}
+          onAlterarPagamento={solicitarPagamentoDivida}
           onVerMais={() => navigation.navigate("DividasFixas")}
         />
 
