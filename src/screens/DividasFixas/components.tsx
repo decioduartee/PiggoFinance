@@ -56,6 +56,7 @@ export function CardResumo({
         valor={valor}
         oculto={oculto}
         cor={pago ? cores.LIME : cores.PURPLE}
+        shrink
         style={styles.resumoValor}
       />
     </View>
@@ -104,6 +105,7 @@ export function LinhaDivida({
           valor={valor}
           oculto={oculto}
           cor={cores.INK}
+          shrink
           style={styles.valorDivida}
         />
 

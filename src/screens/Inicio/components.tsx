@@ -129,6 +129,7 @@ export function TopCards({
           valor={cofrinho}
           oculto={oculto}
           cor={cores.INK}
+          shrink
           style={styles.cardValue}
         />
       </TouchableOpacity>
@@ -143,7 +144,12 @@ export function TopCards({
           <ChevronRight size={16} strokeWidth={2} color={cores.GRAY} />
         </View>
 
-        <Valor valor={totalEntradas} oculto={oculto} style={styles.cardValue} />
+        <Valor
+          valor={totalEntradas}
+          oculto={oculto}
+          shrink
+          style={styles.cardValue}
+        />
 
         {totalDividas > 0 && (
           <View style={styles.miniRow}>
@@ -236,6 +242,7 @@ export function SaldoMesCard({
           valor={saldoDisponivelMes}
           oculto={oculto}
           cor={saldoDisponivelMes >= 0 ? LIME_DARK : CORAL}
+          shrink
           style={styles.saldoValor}
         />
       </View>
@@ -429,6 +436,7 @@ export function DividasFixasCard({
                 valor={Math.abs(Number(divida.valor) || 0)}
                 oculto={oculto}
                 cor={cores.GRAY}
+                shrink
                 style={styles.dividaValor}
               />
             </View>

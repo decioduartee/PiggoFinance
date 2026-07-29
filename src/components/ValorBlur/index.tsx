@@ -21,6 +21,7 @@ type Props = {
   cor?: string;
   style?: StyleProp<TextStyle>;
   containerStyle?: StyleProp<ViewStyle>;
+  shrink?: boolean;
 };
 
 export default function Valor({
@@ -30,6 +31,7 @@ export default function Valor({
   cor,
   style,
   containerStyle,
+  shrink = false,
 }: Props) {
   const { modoEscuro } = useFinance();
 
@@ -42,6 +44,7 @@ export default function Valor({
     <View
       style={[
         styles.container,
+        shrink && styles.shrink,
         oculto && {
           backgroundColor: modoEscuro
             ? "rgba(20,20,20,0.18)"

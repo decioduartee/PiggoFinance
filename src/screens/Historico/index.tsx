@@ -759,6 +759,7 @@ export default function Historico() {
             valor={saldoMes}
             oculto={oculto}
             cor={saldoMes >= 0 ? LIME_DARK : CORAL}
+            shrink
             style={styles.resumoValor}
           />
         </View>
@@ -775,6 +776,7 @@ export default function Historico() {
             oculto={oculto}
             negativo
             cor={CORAL}
+            shrink
             style={styles.resumoValor}
           />
         </View>

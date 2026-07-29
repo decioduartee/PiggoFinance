@@ -3,8 +3,11 @@ import { StyleSheet } from "react-native";
 export const styles = StyleSheet.create({
   container: {
     position: "relative",
-    alignSelf: "flex-start",
     maxWidth: "100%",
+  },
+
+  shrink: {
+    alignSelf: "flex-start",
   },
 
   texto: {
