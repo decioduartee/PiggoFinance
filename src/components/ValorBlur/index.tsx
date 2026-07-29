@@ -1,5 +1,12 @@
 import React from "react";
-import { Platform, Text, TextStyle, View } from "react-native";
+import {
+  Platform,
+  StyleProp,
+  Text,
+  TextStyle,
+  View,
+  ViewStyle,
+} from "react-native";
 import { BlurView } from "expo-blur";
 
 import useFinance from "../../hooks/useFinance";
@@ -12,7 +19,8 @@ type Props = {
   oculto: boolean;
   negativo?: boolean;
   cor?: string;
-  style?: TextStyle;
+  style?: StyleProp<TextStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
 };
 
 export default function Valor({
@@ -21,6 +29,7 @@ export default function Valor({
   negativo = false,
   cor,
   style,
+  containerStyle,
 }: Props) {
   const { modoEscuro } = useFinance();
 
@@ -38,6 +47,7 @@ export default function Valor({
             ? "rgba(20,20,20,0.18)"
             : "rgba(255,255,255,0.12)",
         },
+        containerStyle,
       ]}
     >
       <Text style={[styles.texto, { color: corFinal }, style]}>{texto}</Text>
