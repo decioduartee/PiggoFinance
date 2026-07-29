@@ -22,6 +22,15 @@ import {
   FinanceService,
   adicionarTransacaoOptimistic,
   adicionarSalarioOptimistic,
+  calcularTotalDividasMes,
+  calcularTotalEntradasMes,
+  calcularTotalSaidasMes,
+  criarOcorrenciaTemporaria,
+  filtrarOcorrenciasPorCompetencia,
+  filtrarSalariosPorCompetencia,
+  filtrarTransacoesPorCompetencia,
+  gerarIdTemporario,
+  obterCompetenciaAtual,
 } from "../features/financas";
 
 // ==========================================================
@@ -91,121 +100,6 @@ type Props = {
   children: ReactNode;
   perfilInicial: PerfilUsuario;
 };
-
-// ==========================================================
-// Helpers
-// ==========================================================
-
-function gerarIdTemporario(prefixo: string) {
-  return (
-    `${prefixo}_TEMP_` +
-    `${Date.now()}_` +
-    `${Math.random().toString(16).slice(2, 8)}`
-  );
-}
-
-function normalizarCompetencia(valor?: string) {
-  if (!valor) {
-    return "";
-  }
-
-  const match = String(valor).match(/^(\d{4})-(\d{2})/);
-
-  if (!match) {
-    return "";
-  }
-
-  return `${match[1]}-${match[2]}`;
-}
-
-function obterCompetenciaAtual() {
-  const agora = new Date();
-
-  return (
-    `${agora.getFullYear()}-` +
-    `${String(agora.getMonth() + 1).padStart(2, "0")}`
-  );
-}
-
-function calcularNumeroParcela(inicio: string, competencia: string) {
-  const inicioNormalizado = normalizarCompetencia(inicio);
-  const competenciaNormalizada = normalizarCompetencia(competencia);
-
-  if (!inicioNormalizado || !competenciaNormalizada) {
-    return null;
-  }
-
-  const [anoInicio, mesInicio] = inicioNormalizado.split("-").map(Number);
-  const [anoCompetencia, mesCompetencia] = competenciaNormalizada
-    .split("-")
-    .map(Number);
-
-  return (anoCompetencia - anoInicio) * 12 + (mesCompetencia - mesInicio) + 1;
-}
-
-function montarVencimento(competencia: string, dia?: number) {
-  if (dia == null || Number.isNaN(Number(dia))) {
-    return "";
-  }
-
-  const [ano, mes] = competencia.split("-").map(Number);
-
-  if (!ano || !mes) {
-    return "";
-  }
-
-  const ultimoDia = new Date(ano, mes, 0).getDate();
-  const diaFinal = Math.min(Math.max(Number(dia), 1), ultimoDia);
-
-  return (
-    `${ano}-` +
-    `${String(mes).padStart(2, "0")}-` +
-    `${String(diaFinal).padStart(2, "0")}`
-  );
-}
-
-function criarOcorrenciaTemporaria(
-  divida: Divida,
-  competencia: string,
-): OcorrenciaDivida | null {
-  const inicio = normalizarCompetencia(divida.inicio);
-
-  if (!inicio || competencia < inicio || !divida.ativa) {
-    return null;
-  }
-
-  let numeroParcela: number | undefined;
-  let status: StatusOcorrenciaDivida = "pendente";
-
-  if (divida.tipo === "parcelada") {
-    const totalParcelas = Number(divida.parcelas || 0);
-    const numero = calcularNumeroParcela(divida.inicio, competencia);
-
-    if (!numero || numero < 1 || numero > totalParcelas) {
-      return null;
-    }
-
-    numeroParcela = numero;
-
-    if (numero <= Number(divida.parcelasPagas || 0)) {
-      status = "pago";
-    }
-  }
-
-  const agora = new Date().toISOString();
-
-  return {
-    id: gerarIdTemporario("DOC"),
-    dividaId: divida.id,
-    competencia,
-    numeroParcela,
-    status,
-    vencimento: montarVencimento(competencia, divida.vencimento),
-    pagoEm: "",
-    criadoEm: agora,
-    atualizadoEm: agora,
-  };
-}
 
 // ==========================================================
 // Provider
@@ -908,27 +802,20 @@ export function AppProvider({ children, perfilInicial }: Props) {
   // ==========================================================
 
   const salariosMesAtual = useMemo(
-    () =>
-      salarios.filter(
-        (salario) => normalizarCompetencia(salario.data) === competenciaAtual,
-      ),
+    () => filtrarSalariosPorCompetencia(salarios, competenciaAtual),
     [salarios, competenciaAtual],
   );
 
   const transacoesMesAtual = useMemo(
-    () =>
-      transacoes.filter(
-        (transacao) =>
-          normalizarCompetencia(transacao.data) === competenciaAtual,
-      ),
+    () => filtrarTransacoesPorCompetencia(transacoes, competenciaAtual),
     [transacoes, competenciaAtual],
   );
 
   const ocorrenciasMesAtual = useMemo(
     () =>
-      ocorrenciasDividas.filter(
-        (ocorrencia) =>
-          normalizarCompetencia(ocorrencia.competencia) === competenciaAtual,
+      filtrarOcorrenciasPorCompetencia(
+        ocorrenciasDividas,
+        competenciaAtual,
       ),
     [ocorrenciasDividas, competenciaAtual],
   );
@@ -937,47 +824,20 @@ export function AppProvider({ children, perfilInicial }: Props) {
   // Totais mensais
   // ==========================================================
 
-  const totalEntradasMes = useMemo(() => {
-    return salariosMesAtual.reduce(
-      (soma, salario) => soma + Number(salario.valor || 0),
-      0,
-    );
-  }, [salariosMesAtual]);
+  const totalEntradasMes = useMemo(
+    () => calcularTotalEntradasMes(salariosMesAtual),
+    [salariosMesAtual],
+  );
 
-  const totalSaidasMes = useMemo(() => {
-    return Math.abs(
-      transacoesMesAtual
-        .filter((transacao) => transacao.tipo === "saida")
-        .reduce((soma, transacao) => soma + Number(transacao.valor || 0), 0),
-    );
-  }, [transacoesMesAtual]);
+  const totalSaidasMes = useMemo(
+    () => calcularTotalSaidasMes(transacoesMesAtual),
+    [transacoesMesAtual],
+  );
 
-  const totalDividasMes = useMemo(() => {
-    /*
-     * A ocorrência determina se a dívida pertence ao mês.
-     * Pago ou pendente entram igualmente no saldo.
-     *
-     * O Set evita contabilizar duas vezes uma ocorrência antiga
-     * duplicada para a mesma dívida/competência.
-     */
-    const idsContabilizados = new Set<string>();
-
-    return ocorrenciasMesAtual.reduce((soma, ocorrencia) => {
-      if (idsContabilizados.has(ocorrencia.dividaId)) {
-        return soma;
-      }
-
-      const divida = dividas.find((item) => item.id === ocorrencia.dividaId);
-
-      if (!divida) {
-        return soma;
-      }
-
-      idsContabilizados.add(ocorrencia.dividaId);
-
-      return soma + Number(divida.valor || 0);
-    }, 0);
-  }, [ocorrenciasMesAtual, dividas]);
+  const totalDividasMes = useMemo(
+    () => calcularTotalDividasMes(ocorrenciasMesAtual, dividas),
+    [ocorrenciasMesAtual, dividas],
+  );
 
   const saldoDisponivelMes =
     totalEntradasMes - totalSaidasMes - totalDividasMes;
