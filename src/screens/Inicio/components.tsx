@@ -357,7 +357,18 @@ export function DividasFixasCard({
     return null;
   }
 
-  const dividasVisiveis = dividasAtivas.slice(0, 2);
+  const dividasVisiveis = [...dividasAtivas]
+    .sort((a, b) => {
+      const aPago = Boolean(statusPagamentos[a.id]);
+      const bPago = Boolean(statusPagamentos[b.id]);
+
+      if (aPago === bPago) {
+        return 0;
+      }
+
+      return aPago ? 1 : -1;
+    })
+    .slice(0, 2);
 
   const quantidadePagas = dividasAtivas.filter(
     (divida) => statusPagamentos[divida.id],
