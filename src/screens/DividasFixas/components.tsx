@@ -1,10 +1,10 @@
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { CheckCircle2, ClockAlert, Repeat2 } from "lucide-react-native";
-import { LIME, PURPLELIGHT, PURPLE, CORAL } from "../../theme/colors";
+import { LIME, PURPLE, CORAL } from "../../theme/colors";
 import ValorBlur from "../../components/ValorBlur";
-import type { Divida } from "../../features/financas";
-import type { ThemeColors } from "../../theme";
+import type { Divida } from "../../features/financas/types";
+import type { ThemeColors } from "../../theme/colors";
 import type { createStyles } from "./styles";
 import { dividaParcelada, totalParcelas } from "./utils";
 

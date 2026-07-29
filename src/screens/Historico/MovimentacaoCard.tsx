@@ -4,7 +4,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 import { CORAL, LIME_DARK } from "../../theme/colors";
 import Valor from "../../components/ValorBlur";
 import { letraMaiuscula } from "../../utils/formatadores";
-import type { Transacao } from "../../features/financas";
+import type { Transacao } from "../../features/financas/types";
 import SwipeAction from "../../components/SwipeAction";
 import { renderizarIconeCategoria } from "../../constants/categorias";
 import useFinance from "../../hooks/useFinance";

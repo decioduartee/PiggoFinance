@@ -19,7 +19,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import type { OcorrenciaDivida } from "../../features/financas";
+import type { OcorrenciaDivida } from "../../features/financas/types";
 import useFinance from "../../hooks/useFinance";
 import { temaCores } from "../../theme/colors";
 

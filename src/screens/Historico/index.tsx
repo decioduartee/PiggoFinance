@@ -30,7 +30,7 @@ import type {
   Divida,
   OcorrenciaDivida,
   Transacao,
-} from "../../features/financas";
+} from "../../features/financas/types";
 import useFinance from "../../hooks/useFinance";
 import { CORAL, LIME_DARK, PURPLE, temaCores } from "../../theme/colors";
 import { rotuloDia } from "../../utils/formatadores";

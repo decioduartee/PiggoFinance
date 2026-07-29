@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import type { PerfilUsuario } from "./src/features/perfil";
-import { buscarPerfilUsuario } from "./src/features/perfil";
+import type { PerfilUsuario } from "./src/features/perfil/perfis";
+import { buscarPerfilUsuario } from "./src/features/perfil/perfilStorage";
 
 import { AppProvider } from "./src/app/AppContext";
 import AppContent from "./src/app/AppContent";

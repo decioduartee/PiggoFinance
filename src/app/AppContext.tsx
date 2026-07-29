@@ -9,7 +9,7 @@ import type { AppContextData } from "./AppContext.types";
 import { useFinanceState } from "./useFinanceState";
 import { useProfileState } from "./useProfileState";
 import { useThemeState } from "./useThemeState";
-import type { PerfilUsuario } from "../features/perfil";
+import type { PerfilUsuario } from "../features/perfil/perfis";
 
 export const AppContext = createContext<AppContextData>({} as AppContextData);
 

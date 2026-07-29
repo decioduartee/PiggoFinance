@@ -19,7 +19,7 @@ import {
   agruparPorDia,
   filtrarGastosDoMes,
   limitarTransacoesDosGrupos,
-} from "./helpers";
+} from "../../features/financas/helpers";
 
 import {
   DividasFixasCard,

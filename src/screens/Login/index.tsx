@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import Logo from "../../assets/logo-piggo.png";
 
-import { buscarModoEscuro } from "../../features/tema";
+import { buscarModoEscuro } from "../../features/tema/temaStorage";
 import { temaCores } from "../../theme/colors";
 import { styles } from "./styles";
 

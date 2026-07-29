@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import useFinance from "../../../hooks/useFinance";
 
-import type { Divida, NovaDivida } from "../../../features/financas";
+import type { Divida, NovaDivida } from "../../../features/financas/types";
 
 import { PURPLE, temaCores } from "../../../theme/colors";
 

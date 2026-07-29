@@ -9,7 +9,8 @@ import {
 } from "react-native";
 import { Check } from "lucide-react-native";
 
-import { PERFIS, PerfilUsuario, salvarPerfilUsuario } from "../../features/perfil";
+import { PERFIS, type PerfilUsuario } from "../../features/perfil/perfis";
+import { salvarPerfilUsuario } from "../../features/perfil/perfilStorage";
 import { LIME_DARK, temaCores } from "../../theme/colors";
 import { styles } from "./styles";
 

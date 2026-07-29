@@ -1,4 +1,4 @@
-import type { Divida, OcorrenciaDivida } from "../../features/financas";
+import type { Divida, OcorrenciaDivida } from "../../features/financas/types";
 
 export type Ordem = "recentes" | "antigos";
 

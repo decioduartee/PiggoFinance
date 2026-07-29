@@ -1,4 +1,4 @@
-import { Divida } from "../features/financas";
+import type { Divida } from "../features/financas/types";
 
 export const cofrinhoInicial = 0;
 

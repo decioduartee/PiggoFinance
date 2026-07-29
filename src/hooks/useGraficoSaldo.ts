@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { Salario, Transacao } from "../features/financas";
+import type { Salario, Transacao } from "../features/financas/types";
 import { getMesAtualKey } from "../utils/formatadores";
 
 export interface GraficoSaldoItem {

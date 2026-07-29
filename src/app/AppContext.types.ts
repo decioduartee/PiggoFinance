@@ -1,5 +1,5 @@
 import type React from "react";
-import type { PerfilUsuario } from "../features/perfil";
+import type { PerfilUsuario } from "../features/perfil/perfis";
 import type {
   Divida,
   NovaDivida,
@@ -8,7 +8,7 @@ import type {
   Salario,
   StatusOcorrenciaDivida,
   Transacao,
-} from "../features/financas";
+} from "../features/financas/types";
 
 export type AppContextData = {
   salarios: Salario[];

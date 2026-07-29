@@ -6,7 +6,7 @@ import type {
   Divida,
   NovaDivida,
   OcorrenciaDivida,
-} from "../features/financas";
+} from "../features/financas/types";
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };

@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { PerfilUsuario, salvarPerfilUsuario } from "../features/perfil";
+import type { PerfilUsuario } from "../features/perfil/perfis";
+import { salvarPerfilUsuario } from "../features/perfil/perfilStorage";
 
 export function useProfileState(perfilInicial: PerfilUsuario) {
   const [perfilAtual, setPerfilAtual] = useState<PerfilUsuario>(perfilInicial);

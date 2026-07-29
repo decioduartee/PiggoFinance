@@ -19,7 +19,7 @@ import {
   categorias,
   renderizarIconeCategoria,
 } from "../../../constants/categorias";
-import { Transacao } from "../../../features/financas";
+import type { Transacao } from "../../../features/financas/types";
 import { formatBRL, textoParaValorBRL } from "../../../utils/formatadores";
 import useFinance from "../../../hooks/useFinance";
 import { createStyles } from "./styles";

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { cofrinhoInicial } from "../data/mockData";
-import type { PerfilUsuario } from "../features/perfil";
+import type { PerfilUsuario } from "../features/perfil/perfis";
 import type {
   Divida,
   NovaDivida,
@@ -9,21 +9,22 @@ import type {
   Salario,
   StatusOcorrenciaDivida,
   Transacao,
-} from "../features/financas";
+} from "../features/financas/types";
+import { FinanceService } from "../features/financas/financas.service";
 import {
-  FinanceService,
   adicionarSalarioOptimistic,
   adicionarTransacaoOptimistic,
+} from "../features/financas/financas.store";
+import { gerarIdTemporario, obterCompetenciaAtual } from "../features/financas/competencia";
+import { criarOcorrenciaTemporaria } from "../features/financas/ocorrencias";
+import {
   calcularTotalDividasMes,
   calcularTotalEntradasMes,
   calcularTotalSaidasMes,
-  criarOcorrenciaTemporaria,
   filtrarOcorrenciasPorCompetencia,
   filtrarSalariosPorCompetencia,
   filtrarTransacoesPorCompetencia,
-  gerarIdTemporario,
-  obterCompetenciaAtual,
-} from "../features/financas";
+} from "../features/financas/totais";
 
 function transacaoValida(transacao: Transacao) {
   return (

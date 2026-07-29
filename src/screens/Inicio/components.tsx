@@ -22,12 +22,12 @@ import {
   temaCores,
 } from "../../theme/colors";
 import { letraMaiuscula, rotuloDia } from "../../utils/formatadores";
-import { Divida, Transacao } from "../../features/financas";
+import type { Divida, Transacao } from "../../features/financas/types";
 import { GraficoSaldoItem } from "../../hooks/useGraficoSaldo";
 import { renderizarIconeCategoria } from "../../constants/categorias";
 
 import { styles } from "./styles";
-import { GrupoTransacoes } from "./helpers";
+import type { GrupoTransacoes } from "../../features/financas/helpers";
 
 type Cores = ReturnType<typeof temaCores>;
 

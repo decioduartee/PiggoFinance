@@ -20,7 +20,7 @@ import {
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { PERFIS, type PerfilUsuario } from "../../../features/perfil";
+import { PERFIS, type PerfilUsuario } from "../../../features/perfil/perfis";
 import { LIME_DARK, temaCores } from "../../../theme/colors";
 import useFinance from "../../../hooks/useFinance";
 import { createStyles } from "./styles";

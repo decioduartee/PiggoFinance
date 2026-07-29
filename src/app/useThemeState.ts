@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { buscarModoEscuro, salvarModoEscuro } from "../features/tema";
+import { buscarModoEscuro, salvarModoEscuro } from "../features/tema/temaStorage";
 
 export function useThemeState() {
   const [modoEscuro, setModoEscuro] = useState(false);
