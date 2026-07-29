@@ -82,20 +82,9 @@ export default function GraficoSaldo({
       data.map((item) => ({
         value: item.dividasPagas,
         label: item.label,
-        customDataPoint: () =>
-          item.dividaPagaDia > 0 ? (
-            <View
-              style={[
-                styles.dividaPagaPoint,
-                {
-                  backgroundColor: cores.CARD,
-                  borderColor: PURPLE,
-                },
-              ]}
-            />
-          ) : null,
+        customDataPoint: () => null,
       })),
-    [data, cores.CARD],
+    [data],
   );
 
   const temDividasPagas = useMemo(
@@ -199,7 +188,7 @@ export default function GraficoSaldo({
           endFillColor3={PURPLE}
           startOpacity3={0.05}
           endOpacity3={0.01}
-          dataPointsRadius3={4}
+          dataPointsRadius3={0}
           dataPointsColor3={PURPLE}
           hideRules
           hideYAxisText

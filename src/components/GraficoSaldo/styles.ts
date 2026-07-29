@@ -105,13 +105,6 @@ export const styles = StyleSheet.create({
     width: 10,
   },
 
-  dividaPagaPoint: {
-    borderRadius: 5,
-    borderWidth: 2,
-    height: 10,
-    width: 10,
-  },
-
   legendaTitulo: {
     fontSize: 12,
     fontWeight: "700",
