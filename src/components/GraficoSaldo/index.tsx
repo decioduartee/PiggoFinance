@@ -172,10 +172,13 @@ export default function GraficoSaldo({
           curved={false}
           color1={LIME_DARK}
           thickness1={3}
+          zIndex1={2}
           color2={CORAL}
           thickness2={3}
+          zIndex2={4}
           color3={PURPLE}
-          thickness3={2.5}
+          thickness3={2}
+          zIndex3={1}
           startFillColor1={LIME_DARK}
           endFillColor1={LIME_DARK}
           startOpacity1={0.14}
