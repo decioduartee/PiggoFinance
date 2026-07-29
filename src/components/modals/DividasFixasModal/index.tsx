@@ -14,11 +14,12 @@ import {
   View,
 } from "react-native";
 
-import { CreditCard, Pencil, Repeat, Trash2 } from "lucide-react-native";
+import { CreditCard, Repeat } from "lucide-react-native";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import useFinance from "../../../hooks/useFinance";
+import SwipeAction from "../../SwipeAction";
 
 import type { Divida, NovaDivida } from "../../../features/financas/types";
 
@@ -266,6 +267,31 @@ export default function DividasFixasModal({
   }
 
   // ========================================================
+  // EXCLUIR
+  // ========================================================
+
+  function excluir(item: Divida) {
+    if (ehIdTemporario(item.id)) {
+      return;
+    }
+
+    /*
+     * Se a dívida excluída for justamente a que está
+     * aberta no formulário de edição, limpamos o formulário
+     * imediatamente para não manter dados removidos na tela.
+     */
+    if (id === item.id) {
+      Keyboard.dismiss();
+
+      limpar();
+    }
+
+    void Promise.resolve(onExcluir(item.id)).catch((error) => {
+      console.error("Erro ao excluir dívida:", error);
+    });
+  }
+
+  // ========================================================
   // VALOR
   // ========================================================
 
@@ -510,8 +536,8 @@ export default function DividasFixasModal({
               {dividas.map((item) => {
                 const sincronizando = ehIdTemporario(item.id);
 
-                return (
-                  <View key={item.id} style={styles.card}>
+                const card = (
+                  <View style={styles.card}>
                     {/* =================================== */}
                     {/* DADOS */}
                     {/* =================================== */}
@@ -582,60 +608,21 @@ export default function DividasFixasModal({
                       }}
                       thumbColor={item.ativa ? PURPLE : "#DDD"}
                     />
-
-                    {/* =================================== */}
-                    {/* EDITAR */}
-                    {/* =================================== */}
-
-                    <TouchableOpacity
-                      activeOpacity={0.8}
-                      style={styles.iconButton}
-                      disabled={sincronizando}
-                      onPress={() => editar(item)}
-                    >
-                      <Pencil
-                        size={18}
-                        color={sincronizando ? cores.GRAY : cores.INK}
-                      />
-                    </TouchableOpacity>
-
-                    {/* =================================== */}
-                    {/* EXCLUIR */}
-                    {/* =================================== */}
-
-                    <TouchableOpacity
-                      activeOpacity={0.8}
-                      style={styles.iconButton}
-                      disabled={sincronizando}
-                      onPress={() => {
-                        if (sincronizando) {
-                          return;
-                        }
-
-                        /*
-                         * Se a dívida excluída for justamente a que está
-                         * aberta no formulário de edição, limpamos o
-                         * formulário imediatamente. Assim a interface não
-                         * mantém dados de uma dívida que já foi removida.
-                         */
-                        if (id === item.id) {
-                          Keyboard.dismiss();
-                          limpar();
-                        }
-
-                        void Promise.resolve(onExcluir(item.id)).catch(
-                          (error) => {
-                            console.error("Erro ao excluir dívida:", error);
-                          },
-                        );
-                      }}
-                    >
-                      <Trash2
-                        size={18}
-                        color={sincronizando ? cores.GRAY : PURPLE}
-                      />
-                    </TouchableOpacity>
                   </View>
+                );
+
+                if (sincronizando) {
+                  return <View key={item.id}>{card}</View>;
+                }
+
+                return (
+                  <SwipeAction
+                    key={item.id}
+                    onEdit={() => editar(item)}
+                    onDelete={() => excluir(item)}
+                  >
+                    {card}
+                  </SwipeAction>
                 );
               })}
 

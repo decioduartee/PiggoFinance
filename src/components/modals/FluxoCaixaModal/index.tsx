@@ -14,12 +14,11 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   ChevronRight,
-  Pencil,
-  Trash2,
   Plus,
   FileText,
 } from "lucide-react-native";
-import { CORAL, LIME, PURPLE, temaCores } from "../../../theme/colors";
+import SwipeAction from "../../SwipeAction";
+import { LIME, PURPLE, temaCores } from "../../../theme/colors";
 import useFinance from "../../../hooks/useFinance";
 import { formatBRL, textoParaValorBRL } from "../../../utils/formatadores";
 import { createStyles } from "./styles";
@@ -159,31 +158,25 @@ export default function FluxoCaixaModal({
             )}
 
             {salarios.map((item) => (
-              <View key={item.id} style={styles.card}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cardTitulo}>{item.nome}</Text>
-
-                  <Text style={styles.cardValor}>
-                    R$ {item.valor.toFixed(2).replace(".", ",")}
-                  </Text>
-                </View>
-
+              <SwipeAction
+                key={item.id}
+                onEdit={() => editar(item)}
+                onDelete={() => onApagarSalario(item.id)}
+              >
                 <TouchableOpacity
+                  activeOpacity={0.9}
+                  style={styles.card}
                   onPress={() => editar(item)}
-                  style={styles.iconButton}
-                  activeOpacity={0.8}
                 >
-                  <Pencil size={18} color={cores.INK} />
-                </TouchableOpacity>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardTitulo}>{item.nome}</Text>
 
-                <TouchableOpacity
-                  onPress={() => onApagarSalario(item.id)}
-                  style={styles.iconButton}
-                  activeOpacity={0.8}
-                >
-                  <Trash2 size={18} color={CORAL} />
+                    <Text style={styles.cardValor}>
+                      R$ {item.valor.toFixed(2).replace(".", ",")}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
-              </View>
+              </SwipeAction>
             ))}
 
             <Text style={styles.section}>

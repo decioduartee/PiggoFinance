@@ -94,13 +94,6 @@ export const createStyles = (
       fontSize: 13,
     },
 
-    iconButton: {
-      width: 40,
-      height: 40,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-
     input: {
       height: 52,
       backgroundColor: C.BG,
