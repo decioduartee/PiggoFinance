@@ -1,6 +1,11 @@
 import { useMemo } from "react";
 
-import type { Salario, Transacao } from "../features/financas/types";
+import type {
+  Divida,
+  OcorrenciaDivida,
+  Salario,
+  Transacao,
+} from "../features/financas/types";
 import { getMesAtualKey } from "../utils/formatadores";
 
 export interface GraficoSaldoItem {
@@ -8,8 +13,10 @@ export interface GraficoSaldoItem {
   data: string;
   dataFormatada: string;
   gastoDia: number;
+  dividaPagaDia: number;
   saldo: number;
   gastos: number;
+  dividasPagas: number;
 }
 
 function formatarDataLocal(data: Date) {
@@ -26,13 +33,20 @@ function formatarDataGrafico(data: Date) {
   return `Dia ${dia}`;
 }
 
-function deveMostrarDia(dia: number, ultimoDia: number, teveGasto: boolean) {
-  return dia === ultimoDia || teveGasto;
+function deveMostrarDia(
+  dia: number,
+  ultimoDia: number,
+  teveGasto: boolean,
+  teveDividaPaga: boolean,
+) {
+  return dia === ultimoDia || teveGasto || teveDividaPaga;
 }
 
 export default function useGraficoSaldo(
   salarios: Salario[],
   transacoes: Transacao[],
+  dividas: Divida[],
+  ocorrenciasDividas: OcorrenciaDivida[],
 ) {
   return useMemo(() => {
     const hoje = new Date();
@@ -65,12 +79,42 @@ export default function useGraficoSaldo(
       return mapa;
     }, new Map<string, number>());
 
+    const dividasPorId = new Map(dividas.map((divida) => [divida.id, divida]));
+
+    const dividasPagasPorData = ocorrenciasDividas.reduce((mapa, ocorrencia) => {
+      if (ocorrencia.status !== "pago" || !ocorrencia.pagoEm) {
+        return mapa;
+      }
+
+      const dataPagamento = ocorrencia.pagoEm.slice(0, 10);
+
+      if (dataPagamento.slice(0, 7) !== chaveMesAtual) {
+        return mapa;
+      }
+
+      const divida = dividasPorId.get(ocorrencia.dividaId);
+
+      if (!divida) {
+        return mapa;
+      }
+
+      const valorAtual = mapa.get(dataPagamento) ?? 0;
+      mapa.set(dataPagamento, valorAtual + Math.abs(Number(divida.valor) || 0));
+
+      return mapa;
+    }, new Map<string, number>());
+
     const totalGastos = Array.from(gastosPorData.values()).reduce(
       (soma, valor) => soma + valor,
       0,
     );
 
-    if (totalGastos <= 0) {
+    const totalDividasPagas = Array.from(dividasPagasPorData.values()).reduce(
+      (soma, valor) => soma + valor,
+      0,
+    );
+
+    if (totalGastos <= 0 && totalDividasPagas <= 0) {
       return [];
     }
 
@@ -84,32 +128,56 @@ export default function useGraficoSaldo(
       return Math.max(maiorDia, dia);
     }, 0);
 
-    if (ultimoDiaComGasto <= 0) {
+    const ultimoDiaComDividaPaga = Array.from(dividasPagasPorData.keys()).reduce(
+      (maiorDia, data) => {
+        const dia = Number(data.slice(8, 10));
+
+        if (Number.isNaN(dia)) {
+          return maiorDia;
+        }
+
+        return Math.max(maiorDia, dia);
+      },
+      0,
+    );
+
+    const ultimoDia = Math.max(ultimoDiaComGasto, ultimoDiaComDividaPaga);
+
+    if (ultimoDia <= 0) {
       return [];
     }
 
-    const ultimoDia = ultimoDiaComGasto;
-
     let gastosAcumulados = 0;
+    let dividasPagasAcumuladas = 0;
 
     return Array.from({ length: ultimoDia }, (_, index) => {
       const dia = index + 1;
       const data = new Date(anoAtual, mesAtual, dia);
       const dataISO = formatarDataLocal(data);
       const gastos = gastosPorData.get(dataISO) ?? 0;
+      const dividaPagaDia = dividasPagasPorData.get(dataISO) ?? 0;
       const teveGasto = gastos > 0;
-      const mostrarDia = deveMostrarDia(dia, ultimoDia, teveGasto);
+      const teveDividaPaga = dividaPagaDia > 0;
+      const mostrarDia = deveMostrarDia(
+        dia,
+        ultimoDia,
+        teveGasto,
+        teveDividaPaga,
+      );
 
       gastosAcumulados += gastos;
+      dividasPagasAcumuladas += dividaPagaDia;
 
       return {
         label: mostrarDia ? String(dia) : "",
         data: dataISO,
         dataFormatada: formatarDataGrafico(data),
         gastoDia: gastos,
+        dividaPagaDia,
         saldo: salarioMes - gastosAcumulados,
         gastos: gastosAcumulados,
+        dividasPagas: dividasPagasAcumuladas,
       };
     });
-  }, [salarios, transacoes]);
+  }, [salarios, transacoes, dividas, ocorrenciasDividas]);
 }

@@ -233,7 +233,12 @@ export default function Inicio() {
   // Gráfico
   // ==========================================================
 
-  const dadosGrafico = useGraficoSaldo(salarios, transacoes);
+  const dadosGrafico = useGraficoSaldo(
+    salarios,
+    transacoes,
+    dividas,
+    ocorrenciasDividas,
+  );
 
   // ==========================================================
   // Render

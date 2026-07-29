@@ -7,8 +7,10 @@ export interface GraficoSaldoItem {
   data: string;
   dataFormatada: string;
   gastoDia: number;
+  dividaPagaDia: number;
   saldo: number;
   gastos: number;
+  dividasPagas: number;
 }
 
 export interface GraficoSaldoProps {

@@ -85,7 +85,9 @@ export const styles = StyleSheet.create({
   legenda: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 28,
+    columnGap: 18,
+    rowGap: 8,
+    flexWrap: "wrap",
     justifyContent: "center",
     marginTop: 14,
   },
@@ -99,6 +101,13 @@ export const styles = StyleSheet.create({
 
   legendaPonto: {
     borderRadius: 5,
+    height: 10,
+    width: 10,
+  },
+
+  dividaPagaPoint: {
+    borderRadius: 5,
+    borderWidth: 2,
     height: 10,
     width: 10,
   },

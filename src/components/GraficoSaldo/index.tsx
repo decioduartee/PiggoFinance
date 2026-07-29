@@ -4,7 +4,7 @@ import { TrendingDown } from "lucide-react-native";
 import { LineChart } from "react-native-gifted-charts";
 
 import Valor from "../ValorBlur";
-import { CORAL, LIME_DARK } from "../../theme/colors";
+import { CORAL, LIME_DARK, PURPLE } from "../../theme/colors";
 import { styles } from "./styles";
 import { GraficoSaldoProps } from "./types";
 
@@ -29,8 +29,26 @@ export default function GraficoSaldo({
     [data],
   );
 
+  const maiorDividaPaga = useMemo(
+    () =>
+      data.reduce(
+        (maior, item) =>
+          item.dividaPagaDia > maior.dividaPagaDia ? item : maior,
+        data[0],
+      ),
+    [data],
+  );
+
   const maiorValor = useMemo(
-    () => Math.max(...data.flatMap((item) => [item.saldo, item.gastos]), 100),
+    () =>
+      Math.max(
+        ...data.flatMap((item) => [
+          item.saldo,
+          item.gastos,
+          item.dividasPagas,
+        ]),
+        100,
+      ),
     [data],
   );
 
@@ -59,6 +77,32 @@ export default function GraficoSaldo({
     [data],
   );
 
+  const dividasPagasData = useMemo(
+    () =>
+      data.map((item) => ({
+        value: item.dividasPagas,
+        label: item.label,
+        customDataPoint: () =>
+          item.dividaPagaDia > 0 ? (
+            <View
+              style={[
+                styles.dividaPagaPoint,
+                {
+                  backgroundColor: cores.CARD,
+                  borderColor: PURPLE,
+                },
+              ]}
+            />
+          ) : null,
+      })),
+    [data, cores.CARD],
+  );
+
+  const temDividasPagas = useMemo(
+    () => data.some((item) => item.dividasPagas > 0),
+    [data],
+  );
+
   if (data.length === 0) {
     return (
       <View style={[styles.container, styles.vazioContainer]}>
@@ -69,36 +113,46 @@ export default function GraficoSaldo({
     );
   }
 
-  const textoMaiorGasto =
-    maiorGasto.gastoDia > 0 ? maiorGasto.dataFormatada : "Sem gastos no mês";
+  const destacarGasto = maiorGasto.gastoDia > 0;
+  const destacarDivida = !destacarGasto && maiorDividaPaga.dividaPagaDia > 0;
+  const tituloDestaque = destacarGasto
+    ? maiorGasto.dataFormatada
+    : destacarDivida
+      ? maiorDividaPaga.dataFormatada
+      : "Sem gastos no mês";
+  const valorDestaque = destacarGasto
+    ? maiorGasto.gastoDia
+    : maiorDividaPaga.dividaPagaDia;
+  const corDestaque = destacarDivida ? PURPLE : CORAL;
+  const fundoDestaque = destacarDivida ? cores.SUB_CARD : cores.CORAL_BG;
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerInfo}>
           <Text style={[styles.eyebrow, { color: cores.GRAY }]}>
-            MAIOR GASTO
+            {destacarDivida ? "DÍVIDA PAGA" : "MAIOR GASTO"}
           </Text>
 
           <View style={styles.tituloLinha}>
             <Text style={[styles.titulo, { color: cores.INK }]}>
-              {textoMaiorGasto}
+              {tituloDestaque}
             </Text>
 
-            {maiorGasto.gastoDia > 0 && (
+            {valorDestaque > 0 && (
               <View
                 style={[
                   styles.valorPill,
                   {
-                    backgroundColor: cores.CORAL_BG,
+                    backgroundColor: fundoDestaque,
                   },
                 ]}
               >
                 <Valor
-                  valor={maiorGasto.gastoDia}
+                  valor={valorDestaque}
                   oculto={oculto}
                   negativo
-                  cor={CORAL}
+                  cor={corDestaque}
                   style={styles.valorPillTexto}
                 />
               </View>
@@ -106,7 +160,9 @@ export default function GraficoSaldo({
           </View>
 
           <Text style={[styles.subtitulo, { color: cores.GRAY }]}>
-            Gasto mais alto do mês
+            {destacarDivida
+              ? "Pagamento confirmado no mês"
+              : "Gasto mais alto do mês"}
           </Text>
         </View>
 
@@ -120,6 +176,7 @@ export default function GraficoSaldo({
           key={JSON.stringify(data)}
           data={saldoData}
           data2={gastosData}
+          data3={temDividasPagas ? dividasPagasData : undefined}
           width={larguraGrafico}
           height={180}
           areaChart
@@ -128,6 +185,8 @@ export default function GraficoSaldo({
           thickness1={3}
           color2={CORAL}
           thickness2={3}
+          color3={PURPLE}
+          thickness3={2.5}
           startFillColor1={LIME_DARK}
           endFillColor1={LIME_DARK}
           startOpacity1={0.14}
@@ -136,6 +195,12 @@ export default function GraficoSaldo({
           endFillColor2={CORAL}
           startOpacity2={0.1}
           endOpacity2={0.01}
+          startFillColor3={PURPLE}
+          endFillColor3={PURPLE}
+          startOpacity3={0.05}
+          endOpacity3={0.01}
+          dataPointsRadius3={4}
+          dataPointsColor3={PURPLE}
           hideRules
           hideYAxisText
           yAxisThickness={0}
@@ -175,6 +240,17 @@ export default function GraficoSaldo({
             </Text>
           </View>
         </View>
+
+        {temDividasPagas ? (
+          <View style={styles.legendaItem}>
+            <View style={[styles.legendaPonto, { backgroundColor: PURPLE }]} />
+            <View>
+              <Text style={[styles.legendaTitulo, { color: cores.INK }]}>
+                Dívidas pagas
+              </Text>
+            </View>
+          </View>
+        ) : null}
       </View>
     </View>
   );
