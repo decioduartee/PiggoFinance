@@ -25,7 +25,7 @@ export function createStyles(cores: ThemeColors, tipo: ConfirmacaoAlertTipo) {
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      padding: 28,
+      padding: 24,
       backgroundColor: "rgba(18,18,18,0.34)",
     },
 
@@ -39,11 +39,11 @@ export function createStyles(cores: ThemeColors, tipo: ConfirmacaoAlertTipo) {
 
     alert: {
       width: "100%",
-      maxWidth: 420,
-      borderRadius: 30,
-      paddingHorizontal: 34,
-      paddingTop: 36,
-      paddingBottom: 26,
+      maxWidth: 360,
+      borderRadius: 24,
+      paddingHorizontal: 24,
+      paddingTop: 24,
+      paddingBottom: 18,
       backgroundColor: cores.CARD,
       borderWidth: 1,
       borderColor: cores.LINE_DASH,
@@ -58,12 +58,12 @@ export function createStyles(cores: ThemeColors, tipo: ConfirmacaoAlertTipo) {
     },
 
     iconeBox: {
-      width: 84,
-      height: 84,
-      borderRadius: 24,
+      width: 42,
+      height: 42,
+      borderRadius: 14,
       justifyContent: "center",
       alignItems: "center",
-      marginBottom: 32,
+      marginBottom: 20,
       backgroundColor: fundoIcone,
       borderWidth: 1,
       borderColor: `${cor}22`,
@@ -71,34 +71,34 @@ export function createStyles(cores: ThemeColors, tipo: ConfirmacaoAlertTipo) {
 
     titulo: {
       color: cores.INK,
-      fontSize: 28,
+      fontSize: 20,
       fontWeight: "800",
-      marginBottom: 18,
+      marginBottom: 10,
     },
 
     mensagem: {
       color: cores.INK,
-      fontSize: 20,
-      lineHeight: 30,
-      marginBottom: 34,
+      fontSize: 15,
+      lineHeight: 22,
+      marginBottom: 22,
     },
 
     acoes: {
       flexDirection: "row",
       justifyContent: "flex-end",
       alignItems: "center",
-      gap: 18,
+      gap: 14,
     },
 
     botao: {
-      minHeight: 44,
+      minHeight: 36,
       justifyContent: "center",
       alignItems: "center",
       paddingHorizontal: 4,
     },
 
     textoAcao: {
-      fontSize: 18,
+      fontSize: 15,
       fontWeight: "800",
     },
   });

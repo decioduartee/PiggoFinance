@@ -64,11 +64,11 @@ export default function ConfirmacaoAlert({
         <View style={styles.alert}>
           <View style={styles.iconeBox}>
             {tipo === "danger" ? (
-              <Trash2 size={34} color={CORAL} strokeWidth={2.4} />
+              <Trash2 size={20} color={CORAL} strokeWidth={2.4} />
             ) : tipo === "success" ? (
-              <Check size={38} color={LIME_DARK} strokeWidth={2.4} />
+              <Check size={21} color={LIME_DARK} strokeWidth={2.4} />
             ) : (
-              <Info size={34} color={PURPLE} strokeWidth={2.4} />
+              <Info size={20} color={PURPLE} strokeWidth={2.4} />
             )}
           </View>
 
