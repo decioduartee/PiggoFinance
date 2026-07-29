@@ -1,4 +1,4 @@
-import type { DividaDaCompetencia } from "./utils";
+import type { ItemDivida } from "./utils";
 
 export interface ResumoDividas {
   totalPago: number;
@@ -9,7 +9,7 @@ export interface ResumoDividas {
 }
 
 export function calcularResumoDividas(
-  dividas: DividaDaCompetencia[],
+  dividas: ItemDivida[],
 ): ResumoDividas {
   let totalPago = 0;
   let totalPendente = 0;

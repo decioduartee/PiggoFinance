@@ -127,6 +127,12 @@ export interface OcorrenciaDivida {
   vencimento: string;
 
   /**
+   * Algumas respostas antigas do backend enviam o valor também na ocorrência.
+   * Quando ausente, o app usa o valor da dívida relacionada.
+   */
+  valor?: number;
+
+  /**
    * ISO quando o pagamento for confirmado.
    *
    * Pode ficar vazio enquanto estiver
