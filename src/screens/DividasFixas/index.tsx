@@ -19,7 +19,6 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import type { OcorrenciaDivida } from "../../features/financas/types";
 import useFinance from "../../hooks/useFinance";
 import { temaCores } from "../../theme/colors";
 
@@ -27,8 +26,6 @@ import { CardResumo, LinhaDivida } from "./components";
 import { createStyles } from "./styles";
 import {
   agruparPorVencimento,
-  gerarIdOcorrencia,
-  hojeISO,
   montarDividasDoMes,
   numeroParcelaDaCompetencia,
   ocorrenciaEstaPaga,
@@ -39,35 +36,11 @@ import {
   type Ordem,
 } from "./utils";
 
-type FinanceComAcoes = ReturnType<typeof useFinance> & {
-  alterarStatusOcorrencia?: (
-    ocorrenciaId: string,
-    status: "pago" | "pendente",
-  ) => void | Promise<void>;
-  alterarStatusOcorrenciaDivida?: (
-    ocorrenciaId: string,
-    status: "pago" | "pendente",
-  ) => void | Promise<void>;
-  atualizarStatusOcorrenciaDivida?: (
-    ocorrenciaId: string,
-    status: "pago" | "pendente",
-  ) => void | Promise<void>;
-  editarOcorrenciaDivida?: (
-    ocorrencia: OcorrenciaDivida,
-  ) => void | Promise<void>;
-  salvarOcorrenciaDivida?: (
-    ocorrencia: OcorrenciaDivida,
-  ) => void | Promise<void>;
-  adicionarOcorrenciaDivida?: (
-    ocorrencia: OcorrenciaDivida,
-  ) => void | Promise<void>;
-};
-
 const COOLDOWN_STATUS_MS = 450;
 
 export default function DividasFixas() {
   const navigation = useNavigation();
-  const finance = useFinance() as FinanceComAcoes;
+  const finance = useFinance();
 
   const [busca, setBusca] = useState("");
   const [oculto, setOculto] = useState(false);
@@ -126,10 +99,11 @@ export default function DividasFixas() {
     );
   }, [itensDoMes]);
 
-  async function persistirStatus(
-    item: ItemDivida,
-    novoStatus: "pago" | "pendente",
-  ) {
+  async function marcarComoPago(item: ItemDivida) {
+    if (ocorrenciaEstaPaga(item.ocorrencia) || item.prevista) {
+      return;
+    }
+
     const chaveAtualizacao = item.divida.id;
     if (atualizando.has(chaveAtualizacao)) return;
 
@@ -139,59 +113,8 @@ export default function DividasFixas() {
       return proximo;
     });
 
-    const ocorrenciaAtualizada: OcorrenciaDivida = {
-      ...item.ocorrencia,
-      id: item.prevista ? gerarIdOcorrencia() : item.ocorrencia.id,
-      dividaId: item.divida.id,
-      competencia: competenciaAtual,
-      valor: valorDaDivida(item),
-      status: novoStatus,
-      pagoEm: novoStatus === "pago" ? hojeISO() : "",
-    };
-
     try {
-      // A primeira alteração de uma previsão cria uma ocorrência real.
-      // Assim ela também passa a aparecer corretamente no Histórico.
-      if (item.prevista && finance.adicionarOcorrenciaDivida) {
-        await finance.adicionarOcorrenciaDivida(ocorrenciaAtualizada);
-        return;
-      }
-
-      if (finance.alterarStatusOcorrencia) {
-        await finance.alterarStatusOcorrencia(item.ocorrencia.id, novoStatus);
-        return;
-      }
-
-      if (finance.alterarStatusOcorrenciaDivida) {
-        await finance.alterarStatusOcorrenciaDivida(
-          item.ocorrencia.id,
-          novoStatus,
-        );
-        return;
-      }
-
-      if (finance.atualizarStatusOcorrenciaDivida) {
-        await finance.atualizarStatusOcorrenciaDivida(
-          item.ocorrencia.id,
-          novoStatus,
-        );
-        return;
-      }
-
-      if (finance.editarOcorrenciaDivida) {
-        await finance.editarOcorrenciaDivida(ocorrenciaAtualizada);
-        return;
-      }
-
-      if (finance.salvarOcorrenciaDivida) {
-        await finance.salvarOcorrenciaDivida(ocorrenciaAtualizada);
-        return;
-      }
-
-      Alert.alert(
-        "Ação indisponível",
-        "O useFinance precisa expor uma função para criar ou atualizar a ocorrência da dívida.",
-      );
+      await finance.alterarStatusOcorrencia(item.ocorrencia.id);
     } catch (erro) {
       console.error("Erro ao alterar status da dívida:", erro);
 
@@ -223,7 +146,7 @@ export default function DividasFixas() {
         { text: "Cancelar", style: "cancel" },
         {
           text: "Confirmar",
-          onPress: () => void persistirStatus(item, "pago"),
+          onPress: () => void marcarComoPago(item),
         },
       ],
     );

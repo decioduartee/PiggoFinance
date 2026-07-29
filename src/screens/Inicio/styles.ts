@@ -344,6 +344,16 @@ export const styles = StyleSheet.create({
     marginLeft: 8,
   },
 
+  dividaStatusPago: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 8,
+  },
+
   dividaStatusTexto: {
     fontSize: 11,
     fontWeight: "600",

@@ -175,7 +175,9 @@ export default function Inicio() {
       return;
     }
 
-    const novoStatus = ocorrencia.status === "pago" ? "pendente" : "pago";
+    if (ocorrencia.status === "pago") {
+      return;
+    }
 
     // Bloqueia somente esta dívida.
     setDividasAtualizando((prev) => {
@@ -194,7 +196,7 @@ export default function Inicio() {
        * 4. Sincronização com Google Sheets
        * 5. Rollback em caso de erro
        */
-      await alterarStatusOcorrencia(ocorrencia.id, novoStatus);
+      await alterarStatusOcorrencia(ocorrencia.id);
     } catch (error) {
       console.error("Erro ao alterar pagamento da dívida:", error);
     } finally {

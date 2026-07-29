@@ -117,14 +117,14 @@ export function LinhaDivida({
       {pago ? (
         <View
           style={[
-            styles.statusButton,
-            styles.statusButtonPago,
+            styles.statusPagoBadge,
             {
+              backgroundColor: cores.LIME_BG,
               borderColor: LIME,
             },
           ]}
         >
-          <Text style={[styles.statusTexto, { color: "#fff" }]}>Pago</Text>
+          <CheckCircle2 size={21} color={LIME} strokeWidth={2.5} />
         </View>
       ) : (
         <TouchableOpacity

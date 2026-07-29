@@ -2,6 +2,7 @@ import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import {
   Send,
+  CheckCircle2,
   ChevronRight,
   DollarSign,
   Eye,
@@ -369,14 +370,13 @@ export function DividasFixasCard({
 
       {dividasVisiveis.map((divida) => {
         const pago = Boolean(statusPagamentos[divida.id]);
-        const corStatus = pago ? LIME_DARK : PURPLE;
         const atualizando = dividasAtualizando.has(divida.id);
 
         const estiloStatus = [
           styles.dividaStatus,
           {
-            backgroundColor: corStatus,
-            borderColor: corStatus,
+            backgroundColor: PURPLE,
+            borderColor: PURPLE,
           },
         ];
 
@@ -434,8 +434,16 @@ export function DividasFixasCard({
             </View>
 
             {pago ? (
-              <View style={estiloStatus}>
-                <Text style={textoStatus}>Pago</Text>
+              <View
+                style={[
+                  styles.dividaStatusPago,
+                  {
+                    backgroundColor: cores.LIME_BG,
+                    borderColor: LIME_DARK,
+                  },
+                ]}
+              >
+                <CheckCircle2 size={18} color={LIME_DARK} strokeWidth={2.5} />
               </View>
             ) : (
               <TouchableOpacity

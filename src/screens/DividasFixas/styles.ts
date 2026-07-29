@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native";
-import { LIME, CORAL, temaCores, PURPLE, LIME_DARK } from "../../theme/colors";
+import { CORAL, temaCores, PURPLE } from "../../theme/colors";
 
 export function createStyles(modoEscuro: boolean) {
   const cores = temaCores(modoEscuro);
@@ -207,8 +207,13 @@ export function createStyles(modoEscuro: boolean) {
       paddingHorizontal: 16,
     },
 
-    statusButtonPago: {
-      backgroundColor: LIME_DARK,
+    statusPagoBadge: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      borderWidth: 1,
+      justifyContent: "center",
+      alignItems: "center",
     },
 
     statusButtonPendente: {

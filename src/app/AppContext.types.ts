@@ -6,7 +6,6 @@ import type {
   NovoSalario,
   OcorrenciaDivida,
   Salario,
-  StatusOcorrenciaDivida,
   Transacao,
 } from "../features/financas/types";
 
@@ -44,10 +43,7 @@ export type AppContextData = {
   alterarStatusDivida: (id: string, ativa: boolean) => Promise<void>;
   carregarDividas: () => Promise<void>;
 
-  alterarStatusOcorrencia: (
-    id: string,
-    status: StatusOcorrenciaDivida,
-  ) => Promise<void>;
+  alterarStatusOcorrencia: (id: string) => Promise<void>;
   carregarOcorrenciasDividas: () => Promise<void>;
 
   competenciaAtual: string;

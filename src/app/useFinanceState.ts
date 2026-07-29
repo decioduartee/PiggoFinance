@@ -7,7 +7,6 @@ import type {
   NovoSalario,
   OcorrenciaDivida,
   Salario,
-  StatusOcorrenciaDivida,
   Transacao,
 } from "../features/financas/types";
 import { FinanceService } from "../features/financas/financas.service";
@@ -482,7 +481,7 @@ export function useFinanceState(perfilAtual: PerfilUsuario) {
   }, []);
 
   const alterarStatusOcorrencia = useCallback(
-    async (id: string, status: StatusOcorrenciaDivida) => {
+    async (id: string) => {
       const ocorrenciaAnterior = ocorrenciasDividas.find(
         (item) => item.id === id,
       );
@@ -491,7 +490,7 @@ export function useFinanceState(perfilAtual: PerfilUsuario) {
         throw new Error("Ocorrência da dívida não encontrada.");
       }
 
-      if (ocorrenciaAnterior.status === status) {
+      if (ocorrenciaAnterior.status === "pago") {
         return;
       }
 
@@ -499,8 +498,8 @@ export function useFinanceState(perfilAtual: PerfilUsuario) {
 
       const ocorrenciaOtimista: OcorrenciaDivida = {
         ...ocorrenciaAnterior,
-        status,
-        pagoEm: status === "pago" ? agora : "",
+        status: "pago",
+        pagoEm: agora,
         atualizadoEm: agora,
       };
 
@@ -517,18 +516,10 @@ export function useFinanceState(perfilAtual: PerfilUsuario) {
       if (divida && divida.tipo === "parcelada") {
         const totalParcelas = Number(divida.parcelas || 0);
         const atualPagas = Number(divida.parcelasPagas || 0);
-
-        let novasPagas = atualPagas;
-
-        if (ocorrenciaAnterior.status !== "pago" && status === "pago") {
-          novasPagas++;
-        }
-
-        if (ocorrenciaAnterior.status === "pago" && status !== "pago") {
-          novasPagas--;
-        }
-
-        novasPagas = Math.max(0, Math.min(novasPagas, totalParcelas));
+        const novasPagas = Math.max(
+          0,
+          Math.min(atualPagas + 1, totalParcelas),
+        );
 
         const quitada = totalParcelas > 0 && novasPagas >= totalParcelas;
 
