@@ -62,17 +62,19 @@ export default function ConfirmacaoAlert({
         <Pressable style={styles.backdrop} onPress={onCancelar} />
 
         <View style={styles.alert}>
-          <View style={styles.iconeBox}>
-            {tipo === "danger" ? (
-              <Trash2 size={18} color={CORAL} strokeWidth={2.4} />
-            ) : tipo === "success" ? (
-              <Check size={19} color={LIME_DARK} strokeWidth={2.4} />
-            ) : (
-              <Info size={18} color={PURPLE} strokeWidth={2.4} />
-            )}
-          </View>
+          <View style={styles.header}>
+            <View style={styles.iconeBox}>
+              {tipo === "danger" ? (
+                <Trash2 size={18} color={CORAL} strokeWidth={2.4} />
+              ) : tipo === "success" ? (
+                <Check size={19} color={LIME_DARK} strokeWidth={2.4} />
+              ) : (
+                <Info size={18} color={PURPLE} strokeWidth={2.4} />
+              )}
+            </View>
 
-          <Text style={styles.titulo}>{titulo}</Text>
+            <Text style={styles.titulo}>{titulo}</Text>
+          </View>
 
           <Text style={styles.mensagem}>{mensagem}</Text>
 

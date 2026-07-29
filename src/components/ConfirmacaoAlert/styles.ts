@@ -63,17 +63,23 @@ export function createStyles(cores: ThemeColors, tipo: ConfirmacaoAlertTipo) {
       borderRadius: 12,
       justifyContent: "center",
       alignItems: "center",
-      marginBottom: 14,
       backgroundColor: fundoIcone,
       borderWidth: 1,
       borderColor: `${cor}22`,
     },
 
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      marginBottom: 12,
+    },
+
     titulo: {
+      flex: 1,
       color: cores.INK,
       fontSize: 18,
       fontWeight: "800",
-      marginBottom: 8,
     },
 
     mensagem: {
