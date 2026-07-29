@@ -22,7 +22,7 @@ export function ordenarMaisRecentes(a: Transacao, b: Transacao) {
   return b.id.localeCompare(a.id);
 }
 
-function obterTimestampLancamento(transacao: Transacao) {
+export function obterTimestampLancamento(transacao: Transacao) {
   const datas = [transacao.criadoEm, transacao.atualizadoEm, transacao.data];
 
   for (const data of datas) {

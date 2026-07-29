@@ -31,6 +31,7 @@ import type {
   OcorrenciaDivida,
   Transacao,
 } from "../../features/financas/types";
+import { obterTimestampLancamento } from "../../features/financas/helpers";
 import useFinance from "../../hooks/useFinance";
 import { CORAL, LIME_DARK, PURPLE, temaCores } from "../../theme/colors";
 import { rotuloDia } from "../../utils/formatadores";
@@ -154,6 +155,33 @@ function dataOcorrencia(ocorrencia: OcorrenciaDivida, divida: Divida) {
   const dia = Math.min(Math.max(Number(divida.vencimento) || 1, 1), 28);
 
   return `${competencia}-${String(dia).padStart(2, "0")}`;
+}
+
+function timestampItemHistorico(item: ItemHistorico) {
+  if (item.tipoItem === "transacao") {
+    return obterTimestampLancamento(item.transacao);
+  }
+
+  const datas = [
+    item.ocorrencia.pagoEm,
+    item.ocorrencia.atualizadoEm,
+    item.ocorrencia.criadoEm,
+    item.data,
+  ];
+
+  for (const data of datas) {
+    if (!data) {
+      continue;
+    }
+
+    const timestamp = Date.parse(data);
+
+    if (!Number.isNaN(timestamp)) {
+      return timestamp;
+    }
+  }
+
+  return 0;
 }
 
 export default function Historico() {
@@ -498,6 +526,15 @@ export default function Historico() {
 
         if (comparacao !== 0) {
           return ordem === "recentes" ? -comparacao : comparacao;
+        }
+
+        const timestampA = timestampItemHistorico(a);
+        const timestampB = timestampItemHistorico(b);
+
+        if (timestampA !== timestampB) {
+          return ordem === "recentes"
+            ? timestampB - timestampA
+            : timestampA - timestampB;
         }
 
         return ordem === "recentes"
