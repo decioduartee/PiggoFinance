@@ -22,12 +22,52 @@ export function ordenarMaisRecentes(a: Transacao, b: Transacao) {
   return b.id.localeCompare(a.id);
 }
 
+function obterTimestampLancamento(transacao: Transacao) {
+  const datas = [transacao.criadoEm, transacao.atualizadoEm, transacao.data];
+
+  for (const data of datas) {
+    if (!data) {
+      continue;
+    }
+
+    const timestamp = Date.parse(data);
+
+    if (!Number.isNaN(timestamp)) {
+      return timestamp;
+    }
+  }
+
+  return 0;
+}
+
+function ordenarLancamentosMaisRecentes(a: Transacao, b: Transacao) {
+  const timestampA = obterTimestampLancamento(a);
+  const timestampB = obterTimestampLancamento(b);
+
+  if (timestampA !== timestampB) {
+    return timestampB - timestampA;
+  }
+
+  return ordenarMaisRecentes(a, b);
+}
+
 export function filtrarGastosDoMes(transacoes: Transacao[], mesAtual: string) {
   return [...transacoes]
     .filter(
       (item) => item.tipo === "saida" && dataEstaNoMes(item.data, mesAtual),
     )
     .sort(ordenarMaisRecentes);
+}
+
+export function obterGastoMaisRecenteDoMes(
+  transacoes: Transacao[],
+  mesAtual: string,
+) {
+  return [...transacoes]
+    .filter(
+      (item) => item.tipo === "saida" && dataEstaNoMes(item.data, mesAtual),
+    )
+    .sort(ordenarLancamentosMaisRecentes)[0];
 }
 
 export function agruparPorDia(transacoes: Transacao[]) {

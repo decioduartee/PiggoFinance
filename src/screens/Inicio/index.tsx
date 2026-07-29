@@ -19,6 +19,7 @@ import {
   agruparPorDia,
   filtrarGastosDoMes,
   limitarTransacoesDosGrupos,
+  obterGastoMaisRecenteDoMes,
 } from "../../features/financas/helpers";
 
 import {
@@ -217,6 +218,11 @@ export default function Inicio() {
 
   const gastosDoMes = useMemo(
     () => filtrarGastosDoMes(transacoes, mesAtual),
+    [transacoes, mesAtual],
+  );
+
+  const ultimoGastoDoMes = useMemo(
+    () => obterGastoMaisRecenteDoMes(transacoes, mesAtual),
     [transacoes, mesAtual],
   );
 
@@ -426,7 +432,7 @@ export default function Inicio() {
           oculto={oculto}
           modoEscuro={modoEscuro}
           quantidadeGastosMes={quantidadeGastosMes}
-          ultimoGasto={gastosDoMes[0]}
+          ultimoGasto={ultimoGastoDoMes}
           onAdicionarGasto={() => setModalGasto(true)}
           onVerTodas={() => navigation.navigate("Historico")}
         />
