@@ -25,7 +25,7 @@ export function createStyles(cores: ThemeColors, tipo: ConfirmacaoAlertTipo) {
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      padding: 24,
+      padding: 26,
       backgroundColor: "rgba(18,18,18,0.34)",
     },
 
@@ -39,11 +39,11 @@ export function createStyles(cores: ThemeColors, tipo: ConfirmacaoAlertTipo) {
 
     alert: {
       width: "100%",
-      maxWidth: 360,
-      borderRadius: 24,
-      paddingHorizontal: 24,
-      paddingTop: 24,
-      paddingBottom: 18,
+      maxWidth: 320,
+      borderRadius: 22,
+      paddingHorizontal: 20,
+      paddingTop: 18,
+      paddingBottom: 14,
       backgroundColor: cores.CARD,
       borderWidth: 1,
       borderColor: cores.LINE_DASH,
@@ -58,12 +58,12 @@ export function createStyles(cores: ThemeColors, tipo: ConfirmacaoAlertTipo) {
     },
 
     iconeBox: {
-      width: 42,
-      height: 42,
-      borderRadius: 14,
+      width: 36,
+      height: 36,
+      borderRadius: 12,
       justifyContent: "center",
       alignItems: "center",
-      marginBottom: 20,
+      marginBottom: 14,
       backgroundColor: fundoIcone,
       borderWidth: 1,
       borderColor: `${cor}22`,
@@ -71,34 +71,34 @@ export function createStyles(cores: ThemeColors, tipo: ConfirmacaoAlertTipo) {
 
     titulo: {
       color: cores.INK,
-      fontSize: 20,
+      fontSize: 18,
       fontWeight: "800",
-      marginBottom: 10,
+      marginBottom: 8,
     },
 
     mensagem: {
       color: cores.INK,
-      fontSize: 15,
-      lineHeight: 22,
-      marginBottom: 22,
+      fontSize: 14,
+      lineHeight: 20,
+      marginBottom: 16,
     },
 
     acoes: {
       flexDirection: "row",
       justifyContent: "flex-end",
       alignItems: "center",
-      gap: 14,
+      gap: 12,
     },
 
     botao: {
-      minHeight: 36,
+      minHeight: 32,
       justifyContent: "center",
       alignItems: "center",
       paddingHorizontal: 4,
     },
 
     textoAcao: {
-      fontSize: 15,
+      fontSize: 14,
       fontWeight: "800",
     },
   });
