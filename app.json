@@ -8,7 +8,7 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./src/assets/logo-porquinho.png",
+      "image": "./src/assets/icon-monochrome.png",
       "resizeMode": "contain",
       "backgroundColor": "#92C62A"
     },
