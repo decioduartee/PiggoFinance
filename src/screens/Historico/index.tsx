@@ -140,7 +140,7 @@ function criarOcorrenciaPrevista(
     numeroParcela,
     status: "pendente",
     vencimento: `${competencia}-${String(dia).padStart(2, "0")}`,
-    pagoEm: "",
+    pagoEm: "", 
   };
 }
 

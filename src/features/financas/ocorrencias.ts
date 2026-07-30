@@ -139,7 +139,7 @@ export function criarOcorrenciaTemporaria(
     status,
     vencimento: montarVencimento(competencia, diaVencimentoDivida(divida)),
     valor: valorParcelaDivida(divida),
-    pagoEm: "",
+    pagoEm: status === "pago" ? agora : "",
     criadoEm: agora,
     atualizadoEm: agora,
   };

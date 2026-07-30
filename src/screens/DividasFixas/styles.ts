@@ -23,7 +23,7 @@ export function createStyles(modoEscuro: boolean) {
     },
 
     titulo: {
-      fontSize: 10,
+      fontSize: 28,
       fontWeight: "800",
       color: cores.INK,
     },
@@ -110,7 +110,6 @@ export function createStyles(modoEscuro: boolean) {
     resumoValor: {
       fontSize: 18,
       fontWeight: "800",
-      color: cores.INK,
     },
 
     ordenacao: {
