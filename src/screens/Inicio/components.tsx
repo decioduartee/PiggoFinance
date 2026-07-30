@@ -2,7 +2,8 @@ import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import {
   Send,
-  CheckCircle2,
+  Pin,
+  Check,
   ChevronRight,
   DollarSign,
   Eye,
@@ -423,10 +424,10 @@ export function DividasFixasCard({
                 },
               ]}
             >
-              <Send
+              <Pin
                 size={17}
                 strokeWidth={2}
-                color={pago ? LIME_DARK : PURPLE}
+                color={pago ? PURPLE : PURPLE}
               />
             </View>
 
@@ -462,7 +463,7 @@ export function DividasFixasCard({
                   },
                 ]}
               >
-                <CheckCircle2 size={18} color={LIME_DARK} strokeWidth={2.5} />
+                <Check size={18} color={LIME_DARK} strokeWidth={2.5} />
               </View>
             ) : (
               <TouchableOpacity

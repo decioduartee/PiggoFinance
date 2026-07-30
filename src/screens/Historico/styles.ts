@@ -47,8 +47,6 @@ export function createStyles(modoEscuro: boolean) {
       justifyContent: "center",
       alignItems: "center",
       backgroundColor: cores.CARD,
-      borderWidth: 1,
-      borderColor: cores.SUB_CARD,
     },
 
     buscaBox: {
@@ -58,8 +56,6 @@ export function createStyles(modoEscuro: boolean) {
       borderRadius: 18,
       paddingHorizontal: 16,
       height: 54,
-      borderWidth: 1,
-      borderColor: cores.SUB_CARD,
       marginBottom: 10,
     },
 
@@ -81,8 +77,6 @@ export function createStyles(modoEscuro: boolean) {
       backgroundColor: cores.CARD,
       borderRadius: 22,
       padding: 16,
-      borderWidth: 1,
-      borderColor: cores.SUB_CARD,
     },
 
     resumoIconeEntrada: {
@@ -134,8 +128,6 @@ export function createStyles(modoEscuro: boolean) {
       borderRadius: 18,
       padding: 14,
       marginBottom: 10,
-      borderWidth: 1,
-      borderColor: cores.SUB_CARD,
     },
 
     icone: {
@@ -188,8 +180,6 @@ export function createStyles(modoEscuro: boolean) {
       justifyContent: "center",
       alignItems: "center",
       marginRight: 14,
-      borderWidth: 1,
-      borderColor: cores.SUB_CARD,
     },
 
     tituloButton: {
@@ -209,8 +199,6 @@ export function createStyles(modoEscuro: boolean) {
       paddingVertical: 10,
       borderRadius: 20,
       marginRight: 10,
-      borderWidth: 1,
-      borderColor: cores.SUB_CARD,
     },
 
     mesTexto: {

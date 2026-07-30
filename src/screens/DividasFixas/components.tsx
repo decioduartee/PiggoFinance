@@ -1,6 +1,6 @@
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import { CheckCircle2, ClockAlert, Repeat2 } from "lucide-react-native";
+import { Check, ClockAlert, Repeat2 } from "lucide-react-native";
 import { LIME, PURPLE, CORAL } from "../../theme/colors";
 import ValorBlur from "../../components/ValorBlur";
 import type { Divida } from "../../features/financas/types";
@@ -42,7 +42,7 @@ export function CardResumo({
         ]}
       >
         {pago ? (
-          <CheckCircle2 size={22} color={LIME} strokeWidth={2.2} />
+          <Check size={22} color={LIME} strokeWidth={2.2} />
         ) : (
           <ClockAlert size={22} color={CORAL} strokeWidth={2.2} />
         )}
@@ -126,7 +126,7 @@ export function LinhaDivida({
             },
           ]}
         >
-          <CheckCircle2 size={21} color={LIME} strokeWidth={2.5} />
+          <Check size={21} color={LIME} strokeWidth={2.5} />
         </View>
       ) : (
         <TouchableOpacity

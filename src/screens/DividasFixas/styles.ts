@@ -23,7 +23,7 @@ export function createStyles(modoEscuro: boolean) {
     },
 
     titulo: {
-      fontSize: 28,
+      fontSize: 10,
       fontWeight: "800",
       color: cores.INK,
     },
@@ -45,8 +45,6 @@ export function createStyles(modoEscuro: boolean) {
       justifyContent: "center",
       alignItems: "center",
       backgroundColor: cores.CARD,
-      borderWidth: 1,
-      borderColor: cores.SUB_CARD,
       marginRight: 14,
     },
 
@@ -62,8 +60,6 @@ export function createStyles(modoEscuro: boolean) {
       justifyContent: "center",
       alignItems: "center",
       backgroundColor: cores.CARD,
-      borderWidth: 1,
-      borderColor: cores.SUB_CARD,
     },
 
     buscaBox: {
@@ -73,8 +69,6 @@ export function createStyles(modoEscuro: boolean) {
       borderRadius: 18,
       paddingHorizontal: 16,
       height: 54,
-      borderWidth: 1,
-      borderColor: cores.SUB_CARD,
       marginBottom: 16,
     },
 
@@ -96,8 +90,6 @@ export function createStyles(modoEscuro: boolean) {
       backgroundColor: cores.CARD,
       borderRadius: 22,
       padding: 16,
-      borderWidth: 1,
-      borderColor: cores.SUB_CARD,
     },
 
     resumoIcone: {
@@ -159,8 +151,6 @@ export function createStyles(modoEscuro: boolean) {
       borderRadius: 18,
       paddingHorizontal: 14,
       paddingVertical: 16,
-      borderWidth: 1,
-      borderColor: cores.SUB_CARD,
     },
 
     iconeDivida: {
@@ -211,7 +201,6 @@ export function createStyles(modoEscuro: boolean) {
       width: 40,
       height: 40,
       borderRadius: 20,
-      borderWidth: 1,
       justifyContent: "center",
       alignItems: "center",
     },
