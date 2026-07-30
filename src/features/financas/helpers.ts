@@ -40,7 +40,7 @@ export function obterTimestampLancamento(transacao: Transacao) {
   return 0;
 }
 
-function ordenarLancamentosMaisRecentes(a: Transacao, b: Transacao) {
+export function ordenarLancamentosMaisRecentes(a: Transacao, b: Transacao) {
   const timestampA = obterTimestampLancamento(a);
   const timestampB = obterTimestampLancamento(b);
 
@@ -56,7 +56,15 @@ export function filtrarGastosDoMes(transacoes: Transacao[], mesAtual: string) {
     .filter(
       (item) => item.tipo === "saida" && dataEstaNoMes(item.data, mesAtual),
     )
-    .sort(ordenarMaisRecentes);
+    .sort((a, b) => {
+      const comparacaoData = b.data.localeCompare(a.data);
+
+      if (comparacaoData !== 0) {
+        return comparacaoData;
+      }
+
+      return ordenarLancamentosMaisRecentes(a, b);
+    });
 }
 
 export function obterGastoMaisRecenteDoMes(
