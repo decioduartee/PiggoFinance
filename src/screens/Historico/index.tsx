@@ -32,6 +32,10 @@ import type {
   Transacao,
 } from "../../features/financas/types";
 import { obterTimestampLancamento } from "../../features/financas/helpers";
+import {
+  obterStatusOcorrencia,
+  valorOcorrenciaDivida,
+} from "../../features/financas/ocorrencias";
 import useFinance from "../../hooks/useFinance";
 import { CORAL, LIME_DARK, PURPLE, temaCores } from "../../theme/colors";
 import { rotuloDia } from "../../utils/formatadores";
@@ -506,6 +510,7 @@ export default function Historico() {
         }
 
         const { divida, ocorrencia } = item;
+        const statusOcorrencia = obterStatusOcorrencia(ocorrencia);
 
         const detalhe =
           divida.tipo === "parcelada"
@@ -517,10 +522,10 @@ export default function Historico() {
             .toLowerCase()
             .includes(texto) ||
           detalhe.toLowerCase().includes(texto) ||
-          String(ocorrencia.status ?? "")
-            .toLowerCase()
-            .includes(texto) ||
-          valorTexto(divida.valor).includes(textoValor)
+          statusOcorrencia.toLowerCase().includes(texto) ||
+          valorTexto(valorOcorrenciaDivida(ocorrencia, divida)).includes(
+            textoValor,
+          )
         );
       })
       .sort((a, b) => {
@@ -889,11 +894,14 @@ export default function Historico() {
               const { divida, ocorrencia } = item;
               const futuro =
                 chaveMes(ocorrencia.competencia) > competenciaAtual;
+              const statusOcorrencia = obterStatusOcorrencia(ocorrencia);
 
               const status = futuro
                 ? "Previsto"
-                : ocorrencia.status === "pago"
+                : statusOcorrencia === "pago"
                   ? "Pago"
+                  : statusOcorrencia === "atrasada"
+                    ? "Atrasada"
                   : "Pendente";
 
               const detalhe =
@@ -922,9 +930,11 @@ export default function Historico() {
                           styles.dividaStatus,
                           futuro
                             ? styles.statusPrevisto
-                            : ocorrencia.status === "pago"
+                            : statusOcorrencia === "pago"
                               ? styles.statusPago
-                              : styles.statusPendente,
+                              : statusOcorrencia === "atrasada"
+                                ? styles.statusAtrasada
+                                : styles.statusPendente,
                         ]}
                       >
                         {status}
@@ -933,7 +943,7 @@ export default function Historico() {
                   </View>
 
                   <Valor
-                    valor={Math.abs(Number(divida.valor) || 0)}
+                    valor={valorOcorrenciaDivida(ocorrencia, divida)}
                     oculto={oculto}
                     negativo
                     cor={CORAL}

@@ -90,6 +90,7 @@ export interface Divida
 
 export type StatusOcorrenciaDivida =
   | "pendente"
+  | "atrasada"
   | "pago";
 
 export interface OcorrenciaDivida {

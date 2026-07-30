@@ -25,6 +25,7 @@ import {
 } from "../../theme/colors";
 import { letraMaiuscula, rotuloDia } from "../../utils/formatadores";
 import type { Divida, Transacao } from "../../features/financas/types";
+import { valorParcelaDivida } from "../../features/financas/ocorrencias";
 import { GraficoSaldoItem } from "../../hooks/useGraficoSaldo";
 import { renderizarIconeCategoria } from "../../constants/categorias";
 
@@ -352,13 +353,13 @@ export function DividasFixasCard({
   onAlterarPagamento,
   onVerMais,
 }: DividasFixasCardProps) {
-  const dividasAtivas = dividas.filter((divida) => divida.ativa);
+  const dividasDoMes = dividas;
 
-  if (dividasAtivas.length === 0) {
+  if (dividasDoMes.length === 0) {
     return null;
   }
 
-  const dividasVisiveis = [...dividasAtivas]
+  const dividasVisiveis = [...dividasDoMes]
     .sort((a, b) => {
       const aPago = Boolean(statusPagamentos[a.id]);
       const bPago = Boolean(statusPagamentos[b.id]);
@@ -371,7 +372,7 @@ export function DividasFixasCard({
     })
     .slice(0, 2);
 
-  const quantidadePagas = dividasAtivas.filter(
+  const quantidadePagas = dividasDoMes.filter(
     (divida) => statusPagamentos[divida.id],
   ).length;
 
@@ -383,7 +384,7 @@ export function DividasFixasCard({
         </Text>
 
         <Text style={[styles.dividasContador, { color: cores.GRAY }]}>
-          {quantidadePagas}/{dividasAtivas.length} pagas
+          {quantidadePagas}/{dividasDoMes.length} pagas
         </Text>
       </View>
 
@@ -445,7 +446,7 @@ export function DividasFixasCard({
               </Text>
 
               <Valor
-                valor={Math.abs(Number(divida.valor) || 0)}
+                valor={valorParcelaDivida(divida)}
                 oculto={oculto}
                 cor={cores.GRAY}
                 shrink

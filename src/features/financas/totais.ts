@@ -1,5 +1,6 @@
 import type { Divida, OcorrenciaDivida, Salario, Transacao } from "./types";
 import { normalizarCompetencia } from "./competencia";
+import { valorOcorrenciaDivida } from "./ocorrencias";
 
 export function filtrarSalariosPorCompetencia(
   salarios: Salario[],
@@ -63,6 +64,6 @@ export function calcularTotalDividasMes(
 
     idsContabilizados.add(ocorrencia.dividaId);
 
-    return soma + Number(divida.valor || 0);
+    return soma + valorOcorrenciaDivida(ocorrencia, divida);
   }, 0);
 }

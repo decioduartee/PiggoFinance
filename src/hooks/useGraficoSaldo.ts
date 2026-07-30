@@ -6,6 +6,10 @@ import type {
   Salario,
   Transacao,
 } from "../features/financas/types";
+import {
+  obterStatusOcorrencia,
+  valorOcorrenciaDivida,
+} from "../features/financas/ocorrencias";
 import { getMesAtualKey } from "../utils/formatadores";
 
 export interface GraficoSaldoItem {
@@ -82,7 +86,7 @@ export default function useGraficoSaldo(
     const dividasPorId = new Map(dividas.map((divida) => [divida.id, divida]));
 
     const dividasPagasPorData = ocorrenciasDividas.reduce((mapa, ocorrencia) => {
-      if (ocorrencia.status !== "pago" || !ocorrencia.pagoEm) {
+      if (obterStatusOcorrencia(ocorrencia) !== "pago" || !ocorrencia.pagoEm) {
         return mapa;
       }
 
@@ -99,7 +103,10 @@ export default function useGraficoSaldo(
       }
 
       const valorAtual = mapa.get(dataPagamento) ?? 0;
-      mapa.set(dataPagamento, valorAtual + Math.abs(Number(divida.valor) || 0));
+      mapa.set(
+        dataPagamento,
+        valorAtual + valorOcorrenciaDivida(ocorrencia, divida),
+      );
 
       return mapa;
     }, new Map<string, number>());

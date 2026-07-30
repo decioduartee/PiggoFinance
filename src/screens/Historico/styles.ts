@@ -269,6 +269,10 @@ export function createStyles(modoEscuro: boolean) {
       color: PURPLE,
     },
 
+    statusAtrasada: {
+      color: CORAL,
+    },
+
     ordenacao: {
       alignSelf: "flex-end",
       flexDirection: "row",

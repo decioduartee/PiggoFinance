@@ -35,16 +35,6 @@ function hoje() {
   return new Date();
 }
 
-function inicioMesAtual() {
-  const data = new Date();
-
-  return new Date(data.getFullYear(), data.getMonth(), 1);
-}
-
-function fimMesAtual() {
-  return hoje();
-}
-
 function dataISO(data: Date) {
   const ano = data.getFullYear();
   const mes = String(data.getMonth() + 1).padStart(2, "0");
@@ -156,6 +146,16 @@ export default function NovoGastoModal({
               contentContainerStyle={styles.modalContent}
             >
               <Text style={styles.titulo}>Novo Gasto</Text>
+
+              <TextInput
+                placeholder="Valor"
+                placeholderTextColor={placeholderColor}
+                keyboardType="decimal-pad"
+                style={styles.input}
+                value={valorExibido}
+                onChangeText={alterarValor}
+              />
+
               <TextInput
                 placeholder="Nome do gasto"
                 placeholderTextColor={placeholderColor}
@@ -163,15 +163,6 @@ export default function NovoGastoModal({
                 value={nome}
                 onChangeText={setNome}
               />
-
-            <TextInput
-              placeholder="Valor"
-              placeholderTextColor={placeholderColor}
-              keyboardType="decimal-pad"
-              style={styles.input}
-              value={valorExibido}
-              onChangeText={alterarValor}
-            />
 
             <TouchableOpacity
               activeOpacity={0.85}
@@ -188,8 +179,8 @@ export default function NovoGastoModal({
             </TouchableOpacity>
 
             <Text style={styles.ajudaData}>
-              Você só pode selecionar datas do mês atual. Se não selecionar
-              nada, será usada a data de hoje.
+              Você pode selecionar qualquer data. Se não selecionar nada, será
+              usada a data de hoje.
             </Text>
 
             {mostrarCalendario && (
@@ -197,8 +188,6 @@ export default function NovoGastoModal({
                 value={data ?? hoje()}
                 mode="date"
                 display={Platform.OS === "ios" ? "spinner" : "calendar"}
-                minimumDate={inicioMesAtual()}
-                maximumDate={fimMesAtual()}
                 onChange={(event, selectedDate) => {
                   if (Platform.OS === "android") {
                     setMostrarCalendario(false);

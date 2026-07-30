@@ -209,6 +209,10 @@ export function createStyles(modoEscuro: boolean) {
       backgroundColor: PURPLE,
     },
 
+    statusButtonAtrasada: {
+      backgroundColor: CORAL,
+    },
+
     statusTexto: {
       fontSize: 13,
       fontWeight: "700",

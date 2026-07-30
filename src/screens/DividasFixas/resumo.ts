@@ -1,4 +1,8 @@
-import type { ItemDivida } from "./utils";
+import {
+  ocorrenciaEstaPaga,
+  valorDaDivida,
+  type ItemDivida,
+} from "./utils";
 
 export interface ResumoDividas {
   totalPago: number;
@@ -17,9 +21,9 @@ export function calcularResumoDividas(
   let quantidadePendentes = 0;
 
   for (const item of dividas) {
-    const valor = Number(item.ocorrencia.valor ?? 0);
+    const valor = valorDaDivida(item);
 
-    if (item.ocorrencia.status === "pago") {
+    if (ocorrenciaEstaPaga(item.ocorrencia)) {
       totalPago += valor;
       quantidadePagas++;
     } else {

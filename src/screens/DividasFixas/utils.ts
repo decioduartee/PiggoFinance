@@ -1,4 +1,12 @@
 import type { Divida, OcorrenciaDivida } from "../../features/financas/types";
+import {
+  dividaParcelada as ehDividaParcelada,
+  dividaPertenceCompetencia,
+  obterStatusOcorrencia,
+  totalParcelasDivida,
+  valorOcorrenciaDivida,
+  valorParcelaDivida,
+} from "../../features/financas/ocorrencias";
 
 export type Ordem = "recentes" | "antigos";
 
@@ -78,18 +86,11 @@ export function numeroParcelaDaCompetencia(
 }
 
 export function totalParcelas(divida: Divida) {
-  return (
-    Number(divida.parcelas) ||
-    Number(divida.totalParcelas) ||
-    0
-  );
+  return totalParcelasDivida(divida);
 }
 
 export function dividaParcelada(divida: Divida) {
-  return (
-    divida.tipo === "parcelada" ||
-    Boolean(divida.parcelada)
-  );
+  return ehDividaParcelada(divida);
 }
 
 export function criarOcorrenciaPendente(
@@ -105,7 +106,7 @@ export function criarOcorrenciaPendente(
     dividaId: divida.id,
     competencia,
     vencimento: dataVencimentoDaCompetencia(competencia, divida),
-    valor: Math.abs(Number(divida.valor) || 0),
+    valor: valorParcelaDivida(divida),
     status: "pendente",
     pagoEm: "",
     ...(numeroParcela ? { numeroParcela } : {}),
@@ -116,18 +117,7 @@ export function dividaValidaNaCompetencia(
   divida: Divida,
   competencia: string,
 ) {
-  if (divida.ativa === false) return false;
-
-  const inicio = chaveMes(divida.inicio);
-  if (inicio && competencia < inicio) return false;
-
-  if (!dividaParcelada(divida)) return true;
-
-  const parcela = numeroParcelaDaCompetencia(divida, competencia);
-  const total = totalParcelas(divida);
-
-  if (!parcela || total <= 0) return false;
-  return parcela <= total;
+  return dividaPertenceCompetencia(divida, competencia);
 }
 
 export function montarDividasDoMes({
@@ -144,7 +134,11 @@ export function montarDividasDoMes({
   );
 
   return dividas
-    .filter((divida) => dividaValidaNaCompetencia(divida, competencia))
+    .filter(
+      (divida) =>
+        dividaValidaNaCompetencia(divida, competencia) ||
+        ocorrenciasDoMes.some((item) => item.dividaId === divida.id),
+    )
     .map<ItemDivida>((divida) => {
       const real = ocorrenciasDoMes.find(
         (item) => item.dividaId === divida.id,
@@ -173,7 +167,7 @@ export function pesquisarDividas(lista: ItemDivida[], texto: string) {
 
   return lista.filter(({ divida, ocorrencia }) => {
     const nome = String(divida.nome ?? "").toLowerCase();
-    const status = String(ocorrencia.status ?? "").toLowerCase();
+    const status = obterStatusOcorrencia(ocorrencia).toLowerCase();
     const tipo = dividaParcelada(divida) ? "parcela" : "recorrente";
     const valor = valorDaDivida({ divida, ocorrencia })
       .toLocaleString("pt-BR", {
@@ -209,11 +203,15 @@ export function valorDaDivida({
   divida,
   ocorrencia,
 }: Pick<ItemDivida, "divida" | "ocorrencia">) {
-  return Math.abs(Number(ocorrencia.valor ?? divida.valor) || 0);
+  return valorOcorrenciaDivida(ocorrencia, divida);
 }
 
 export function ocorrenciaEstaPaga(ocorrencia: OcorrenciaDivida) {
-  return ocorrencia.status === "pago";
+  return obterStatusOcorrencia(ocorrencia) === "pago";
+}
+
+export function ocorrenciaEstaAtrasada(ocorrencia: OcorrenciaDivida) {
+  return obterStatusOcorrencia(ocorrencia) === "atrasada";
 }
 
 export function rotuloVencimento(data: string) {

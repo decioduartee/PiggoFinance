@@ -28,6 +28,7 @@ import {
   agruparPorVencimento,
   montarDividasDoMes,
   numeroParcelaDaCompetencia,
+  ocorrenciaEstaAtrasada,
   ocorrenciaEstaPaga,
   ordenarDividas,
   pesquisarDividas,
@@ -268,6 +269,7 @@ export default function DividasFixas() {
 
             {grupo.itens.map((item, indice) => {
               const pago = ocorrenciaEstaPaga(item.ocorrencia);
+              const atrasada = ocorrenciaEstaAtrasada(item.ocorrencia);
               const valor = valorDaDivida(item);
 
               return (
@@ -276,6 +278,7 @@ export default function DividasFixas() {
                     divida={item.divida}
                     valor={valor}
                     pago={pago}
+                    atrasada={atrasada}
                     oculto={oculto}
                     atualizando={atualizando.has(item.divida.id)}
                     onPressStatus={() => alternarStatus(item)}

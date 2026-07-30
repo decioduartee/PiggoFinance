@@ -22,6 +22,10 @@ import {
   limitarTransacoesDosGrupos,
   obterGastoMaisRecenteDoMes,
 } from "../../features/financas/helpers";
+import {
+  dividaPertenceCompetencia,
+  obterStatusOcorrencia,
+} from "../../features/financas/ocorrencias";
 
 import {
   DividasFixasCard,
@@ -137,6 +141,21 @@ export default function Inicio() {
     );
   }, [ocorrenciasDividas, competenciaAtual]);
 
+  const dividasMesAtual = useMemo(
+    () => {
+      const idsComOcorrenciaNoMes = new Set(
+        ocorrenciasMesAtual.map((ocorrencia) => ocorrencia.dividaId),
+      );
+
+      return dividas.filter(
+        (divida) =>
+          dividaPertenceCompetencia(divida, competenciaAtual) ||
+          idsComOcorrenciaNoMes.has(divida.id),
+      );
+    },
+    [dividas, ocorrenciasMesAtual, competenciaAtual],
+  );
+
   // ==========================================================
   // Status Pago / Pendente
   // ==========================================================
@@ -145,7 +164,8 @@ export default function Inicio() {
     const status: Record<string, boolean> = {};
 
     ocorrenciasMesAtual.forEach((ocorrencia) => {
-      status[ocorrencia.dividaId] = ocorrencia.status === "pago";
+      status[ocorrencia.dividaId] =
+        obterStatusOcorrencia(ocorrencia) === "pago";
     });
 
     return status;
@@ -186,7 +206,7 @@ export default function Inicio() {
       return;
     }
 
-    if (ocorrencia.status === "pago") {
+    if (obterStatusOcorrencia(ocorrencia) === "pago") {
       return;
     }
 
@@ -486,7 +506,7 @@ export default function Inicio() {
           cores={cores}
           modoEscuro={modoEscuro}
           oculto={oculto}
-          dividas={dividas}
+          dividas={dividasMesAtual}
           statusPagamentos={statusDividas}
           dividasAtualizando={dividasAtualizando}
           onAlterarPagamento={solicitarPagamentoDivida}

@@ -68,6 +68,7 @@ export function LinhaDivida({
   valor,
   numeroParcela,
   pago,
+  atrasada,
   oculto,
   atualizando,
   onPressStatus,
@@ -78,6 +79,7 @@ export function LinhaDivida({
   valor: number;
   numeroParcela?: number;
   pago: boolean;
+  atrasada: boolean;
   oculto: boolean;
   atualizando: boolean;
   onPressStatus: () => void;
@@ -135,14 +137,18 @@ export function LinhaDivida({
           onPress={onPressStatus}
           style={[
             styles.statusButton,
-            styles.statusButtonPendente,
+            atrasada
+              ? styles.statusButtonAtrasada
+              : styles.statusButtonPendente,
             {
-              borderColor: PURPLE,
+              borderColor: atrasada ? CORAL : PURPLE,
               opacity: atualizando ? 0.55 : 1,
             },
           ]}
         >
-          <Text style={[styles.statusTexto, { color: "#fff" }]}>Pendente</Text>
+          <Text style={[styles.statusTexto, { color: "#fff" }]}>
+            {atrasada ? "Atrasada" : "Pendente"}
+          </Text>
         </TouchableOpacity>
       )}
     </View>
