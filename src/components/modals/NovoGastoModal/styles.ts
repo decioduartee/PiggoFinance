@@ -84,7 +84,6 @@ export function createStyles(modoEscuro: boolean, bottomInset = 0) {
     },
 
     valorRapidoSelecionado: {
-      backgroundColor: C.PURPLELIGHT ?? PURPLELIGHT,
       borderColor: PURPLE,
     },
 
