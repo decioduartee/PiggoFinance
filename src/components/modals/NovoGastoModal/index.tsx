@@ -31,6 +31,8 @@ type Props = {
   onSalvar: (transacao: Transacao) => void;
 };
 
+const valoresRapidos = [10, 20, 50, 100];
+
 function hoje() {
   return new Date();
 }
@@ -120,7 +122,12 @@ export default function NovoGastoModal({
     setValor(textoParaValorBRL(texto));
   }
 
+  function selecionarValorRapido(valorSelecionado: number) {
+    setValor(String(valorSelecionado));
+  }
+
   const valorExibido = valor === "" ? "0,00" : formatBRL(Number(valor));
+  const valorSelecionado = Number(valor);
 
   return (
     <Modal
@@ -151,10 +158,37 @@ export default function NovoGastoModal({
                 placeholder="Valor"
                 placeholderTextColor={placeholderColor}
                 keyboardType="decimal-pad"
-                style={styles.input}
+                style={[styles.input, styles.inputValor]}
                 value={valorExibido}
                 onChangeText={alterarValor}
               />
+
+              <View style={styles.valoresRapidos}>
+                {valoresRapidos.map((item) => {
+                  const selecionado = valorSelecionado === item;
+
+                  return (
+                    <TouchableOpacity
+                      key={item}
+                      activeOpacity={0.82}
+                      style={[
+                        styles.valorRapidoBotao,
+                        selecionado && styles.valorRapidoSelecionado,
+                      ]}
+                      onPress={() => selecionarValorRapido(item)}
+                    >
+                      <Text
+                        style={[
+                          styles.valorRapidoTexto,
+                          selecionado && styles.valorRapidoTextoSelecionado,
+                        ]}
+                      >
+                        R${item}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
 
               <TextInput
                 placeholder="Nome do gasto"

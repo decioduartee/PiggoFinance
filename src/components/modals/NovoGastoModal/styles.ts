@@ -1,6 +1,12 @@
 import { StyleSheet } from "react-native";
 
-import { CORAL, LIME, temaCores } from "../../../theme/colors";
+import {
+  CORAL,
+  LIME,
+  PURPLE,
+  PURPLELIGHT,
+  temaCores,
+} from "../../../theme/colors";
 
 export function createStyles(modoEscuro: boolean, bottomInset = 0) {
   const C = temaCores(modoEscuro);
@@ -51,6 +57,45 @@ export function createStyles(modoEscuro: boolean, bottomInset = 0) {
       color: C.INK,
       fontSize: 16,
       marginBottom: 12,
+    },
+
+    inputValor: {
+      fontSize: 20,
+      fontWeight: "700",
+      letterSpacing: 0,
+    },
+
+    valoresRapidos: {
+      flexDirection: "row",
+      gap: 8,
+      marginTop: -2,
+      marginBottom: 14,
+    },
+
+    valorRapidoBotao: {
+      flex: 1,
+      height: 38,
+      borderRadius: 12,
+      backgroundColor: C.BG,
+      borderWidth: 1,
+      borderColor: C.LINE_DASH,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+
+    valorRapidoSelecionado: {
+      backgroundColor: C.PURPLELIGHT ?? PURPLELIGHT,
+      borderColor: PURPLE,
+    },
+
+    valorRapidoTexto: {
+      color: C.GRAY,
+      fontSize: 13,
+      fontWeight: "700",
+    },
+
+    valorRapidoTextoSelecionado: {
+      color: PURPLE,
     },
 
     dataBox: {
