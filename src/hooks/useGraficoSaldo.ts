@@ -38,12 +38,10 @@ function formatarDataGrafico(data: Date) {
 }
 
 function deveMostrarDia(
-  dia: number,
-  ultimoDia: number,
   teveGasto: boolean,
   teveDivida: boolean,
 ) {
-  return dia === 1 || dia === ultimoDia || teveGasto || teveDivida;
+  return teveGasto || teveDivida;
 }
 
 export default function useGraficoSaldo(
@@ -250,8 +248,6 @@ export default function useGraficoSaldo(
       const teveGasto = gastos > 0;
       const teveDivida = dividaMesDia > 0 || dividaPagaDia > 0;
       const mostrarDia = deveMostrarDia(
-        dia,
-        ultimoDia,
         teveGasto,
         teveDivida,
       );
