@@ -142,18 +142,11 @@ export default function Inicio() {
   }, [ocorrenciasDividas, competenciaAtual]);
 
   const dividasMesAtual = useMemo(
-    () => {
-      const idsComOcorrenciaNoMes = new Set(
-        ocorrenciasMesAtual.map((ocorrencia) => ocorrencia.dividaId),
-      );
-
-      return dividas.filter(
-        (divida) =>
-          dividaPertenceCompetencia(divida, competenciaAtual) ||
-          idsComOcorrenciaNoMes.has(divida.id),
-      );
-    },
-    [dividas, ocorrenciasMesAtual, competenciaAtual],
+    () =>
+      dividas.filter((divida) =>
+        dividaPertenceCompetencia(divida, competenciaAtual),
+      ),
+    [dividas, competenciaAtual],
   );
 
   // ==========================================================

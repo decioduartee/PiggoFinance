@@ -134,11 +134,7 @@ export function montarDividasDoMes({
   );
 
   return dividas
-    .filter(
-      (divida) =>
-        dividaValidaNaCompetencia(divida, competencia) ||
-        ocorrenciasDoMes.some((item) => item.dividaId === divida.id),
-    )
+    .filter((divida) => dividaValidaNaCompetencia(divida, competencia))
     .map<ItemDivida>((divida) => {
       const real = ocorrenciasDoMes.find(
         (item) => item.dividaId === divida.id,

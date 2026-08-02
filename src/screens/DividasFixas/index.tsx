@@ -61,6 +61,8 @@ export default function DividasFixas() {
   const [atualizando, setAtualizando] = useState<Set<string>>(() => new Set());
   const [dividaConfirmandoPagamento, setDividaConfirmandoPagamento] =
     useState<ItemDivida | null>(null);
+  const [dividaConfirmandoExclusao, setDividaConfirmandoExclusao] =
+    useState<ItemDivida | null>(null);
   const [modalEdicaoDivida, setModalEdicaoDivida] = useState(false);
   const [dividaEditando, setDividaEditando] = useState<ItemDivida | null>(null);
   const [prefillDivida, setPrefillDivida] =
@@ -210,6 +212,23 @@ export default function DividasFixas() {
     setModalEdicaoDivida(true);
   }
 
+  function solicitarExclusaoDivida(item: ItemDivida) {
+    if (item.divida.id.includes("_TEMP_")) {
+      return;
+    }
+
+    setDividaConfirmandoExclusao(item);
+  }
+
+  function confirmarExclusaoDivida() {
+    if (!dividaConfirmandoExclusao) {
+      return;
+    }
+
+    void excluirDivida(dividaConfirmandoExclusao.divida.id);
+    setDividaConfirmandoExclusao(null);
+  }
+
   const header = (
     <>
       <View style={styles.header}>
@@ -333,6 +352,16 @@ export default function DividasFixas() {
       />
 
       <ConfirmacaoAlert
+        visivel={Boolean(dividaConfirmandoExclusao)}
+        tipo="danger"
+        titulo="Excluir dívida"
+        mensagem={`Deseja realmente excluir "${dividaConfirmandoExclusao?.divida.nome ?? "esta dívida"}"?`}
+        textoConfirmar="Excluir"
+        onCancelar={() => setDividaConfirmandoExclusao(null)}
+        onConfirmar={confirmarExclusaoDivida}
+      />
+
+      <ConfirmacaoAlert
         visivel={erroAtualizacao}
         tipo="info"
         titulo="Não foi possível atualizar"
@@ -368,6 +397,7 @@ export default function DividasFixas() {
                 <SwipeAction
                   key={item.id}
                   onEdit={() => abrirEdicaoDivida(item)}
+                  onDelete={() => solicitarExclusaoDivida(item)}
                   editLabel="Editar"
                 >
                   <LinhaDivida
