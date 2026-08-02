@@ -306,6 +306,7 @@ export default function Inicio() {
     transacoes,
     dividas,
     ocorrenciasDividas,
+    competenciaAtual,
   );
 
   // ==========================================================

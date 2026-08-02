@@ -10,6 +10,8 @@ import {
   obterStatusOcorrencia,
   valorOcorrenciaDivida,
 } from "../features/financas/ocorrencias";
+import { normalizarCompetencia } from "../features/financas/competencia";
+import { filtrarSalariosPorCompetencia } from "../features/financas/totais";
 import { getMesAtualKey } from "../utils/formatadores";
 
 export interface GraficoSaldoItem {
@@ -51,20 +53,28 @@ export default function useGraficoSaldo(
   transacoes: Transacao[],
   dividas: Divida[],
   ocorrenciasDividas: OcorrenciaDivida[],
+  competenciaAtual?: string,
 ) {
   return useMemo(() => {
     const hoje = new Date();
-    const anoAtual = hoje.getFullYear();
-    const mesAtual = hoje.getMonth();
-    const chaveMesAtual = getMesAtualKey();
-    const salarioMes = salarios
-      .filter(
-        (s) =>
-          s?.data &&
-          s.data.slice(0, 7) <= chaveMesAtual &&
-          !Number.isNaN(Number(s.valor)),
-      )
-      .reduce((soma, item) => soma + Number(item.valor), 0);
+    const competenciaReal = getMesAtualKey();
+    const chaveMesAtual =
+      normalizarCompetencia(competenciaAtual) || competenciaReal;
+    const [anoAtual, mesAtualNumero] = chaveMesAtual.split("-").map(Number);
+    const mesAtual = Math.max(0, (mesAtualNumero || 1) - 1);
+    const diaReferencia =
+      chaveMesAtual === competenciaReal
+        ? hoje.getDate()
+        : new Date(anoAtual, mesAtual + 1, 0).getDate();
+    const salarioMes = filtrarSalariosPorCompetencia(
+      salarios,
+      chaveMesAtual,
+    )
+      .reduce((soma, item) => {
+        const valor = Number(item.valor);
+
+        return Number.isNaN(valor) ? soma : soma + valor;
+      }, 0);
 
     const transacoesValidas = transacoes.filter(
       (t) =>
@@ -121,7 +131,7 @@ export default function useGraficoSaldo(
       0,
     );
 
-    if (totalGastos <= 0 && totalDividasPagas <= 0) {
+    if (salarioMes <= 0 && totalGastos <= 0 && totalDividasPagas <= 0) {
       return [];
     }
 
@@ -148,7 +158,11 @@ export default function useGraficoSaldo(
       0,
     );
 
-    const ultimoDia = Math.max(ultimoDiaComGasto, ultimoDiaComDividaPaga);
+    const ultimoDia = Math.max(
+      ultimoDiaComGasto,
+      ultimoDiaComDividaPaga,
+      salarioMes > 0 ? diaReferencia : 0,
+    );
 
     if (ultimoDia <= 0) {
       return [];
@@ -181,10 +195,10 @@ export default function useGraficoSaldo(
         dataFormatada: formatarDataGrafico(data),
         gastoDia: gastos,
         dividaPagaDia,
-        saldo: salarioMes - gastosAcumulados,
+        saldo: salarioMes - gastosAcumulados - dividasPagasAcumuladas,
         gastos: gastosAcumulados,
         dividasPagas: dividasPagasAcumuladas,
       };
     });
-  }, [salarios, transacoes, dividas, ocorrenciasDividas]);
+  }, [salarios, transacoes, dividas, ocorrenciasDividas, competenciaAtual]);
 }
