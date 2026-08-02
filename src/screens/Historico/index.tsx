@@ -42,7 +42,7 @@ import {
 import useFinance from "../../hooks/useFinance";
 import type { RootStackParamList } from "../../navigation/AppNavigator";
 import { CORAL, LIME_DARK, PURPLE, temaCores } from "../../theme/colors";
-import { rotuloDia } from "../../utils/formatadores";
+import { normalizarDataISO, rotuloDia } from "../../utils/formatadores";
 
 import MovimentacaoCard from "./MovimentacaoCard";
 import { createStyles } from "./styles";
@@ -190,6 +190,70 @@ function timestampItemHistorico(item: ItemHistorico) {
   }
 
   return 0;
+}
+
+function compararDataCalendario(
+  dataA: string,
+  dataB: string,
+  ordem: Ordem,
+) {
+  const comparacao = normalizarDataISO(dataA).localeCompare(
+    normalizarDataISO(dataB),
+  );
+
+  if (comparacao === 0) {
+    return 0;
+  }
+
+  return ordem === "recentes" ? -comparacao : comparacao;
+}
+
+function compararItensHistorico(
+  a: ItemHistorico,
+  b: ItemHistorico,
+  ordem: Ordem,
+) {
+  if (a.tipoItem === "transacao" && b.tipoItem === "transacao") {
+    const timestampA = timestampItemHistorico(a);
+    const timestampB = timestampItemHistorico(b);
+
+    if (timestampA !== timestampB) {
+      return ordem === "recentes"
+        ? timestampB - timestampA
+        : timestampA - timestampB;
+    }
+  }
+
+  if (a.tipoItem === "divida" && b.tipoItem === "divida") {
+    const comparacaoVencimento = normalizarDataISO(a.data).localeCompare(
+      normalizarDataISO(b.data),
+    );
+
+    if (comparacaoVencimento !== 0) {
+      return ordem === "recentes"
+        ? comparacaoVencimento
+        : -comparacaoVencimento;
+    }
+  }
+
+  const comparacaoData = compararDataCalendario(a.data, b.data, ordem);
+
+  if (comparacaoData !== 0) {
+    return comparacaoData;
+  }
+
+  const timestampA = timestampItemHistorico(a);
+  const timestampB = timestampItemHistorico(b);
+
+  if (timestampA !== timestampB) {
+    return ordem === "recentes"
+      ? timestampB - timestampA
+      : timestampA - timestampB;
+  }
+
+  return ordem === "recentes"
+    ? b.id.localeCompare(a.id)
+    : a.id.localeCompare(b.id);
 }
 
 export default function Historico() {
@@ -540,26 +604,7 @@ export default function Historico() {
           )
         );
       })
-      .sort((a, b) => {
-        const timestampA = timestampItemHistorico(a);
-        const timestampB = timestampItemHistorico(b);
-
-        if (timestampA !== timestampB) {
-          return ordem === "recentes"
-            ? timestampB - timestampA
-            : timestampA - timestampB;
-        }
-
-        const comparacao = String(a.data).localeCompare(String(b.data));
-
-        if (comparacao !== 0) {
-          return ordem === "recentes" ? -comparacao : comparacao;
-        }
-
-        return ordem === "recentes"
-          ? b.id.localeCompare(a.id)
-          : a.id.localeCompare(b.id);
-      });
+      .sort((a, b) => compararItensHistorico(a, b, ordem));
   }, [itensDoMes, busca, ordem]);
 
   // ========================================================

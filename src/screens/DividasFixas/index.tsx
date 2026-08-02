@@ -355,9 +355,7 @@ export default function DividasFixas() {
       >
         <ArrowDownUp size={15} color={cores.GRAY} style={{ marginRight: 6 }} />
         <Text style={styles.ordenacaoTexto}>
-          {ordem === "recentes"
-            ? "Dívidas mais recentes"
-            : "Dívidas mais antigas"}
+          {ordem === "recentes" ? "Mais recentes" : "Mais antigas"}
         </Text>
       </TouchableOpacity>
     </>
