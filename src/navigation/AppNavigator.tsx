@@ -9,7 +9,15 @@ import { defaultScreenOptions } from "./options";
 export type RootStackParamList = {
   Home: undefined;
   Historico: undefined;
-  DividasFixas: undefined;
+  DividasFixas:
+    | {
+        abrirCadastro?: boolean;
+        nome?: string;
+        valor?: number;
+        mesInicio?: number;
+        anoInicio?: number;
+      }
+    | undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();

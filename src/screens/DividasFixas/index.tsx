@@ -1,6 +1,6 @@
 // src/screens/DividasFixas/index.tsx
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Text,
@@ -15,11 +15,20 @@ import {
   EyeOff,
   Search,
 } from "lucide-react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import type {
+  NativeStackNavigationProp,
+  NativeStackScreenProps,
+} from "@react-navigation/native-stack";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import ConfirmacaoAlert from "../../components/ConfirmacaoAlert";
+import DividasFixasModal, {
+  type PrefillDividaParcelada,
+} from "../../components/modals/DividasFixasModal";
+import SwipeAction from "../../components/SwipeAction";
 import useFinance from "../../hooks/useFinance";
+import type { RootStackParamList } from "../../navigation/AppNavigator";
 import { temaCores } from "../../theme/colors";
 
 import { CardResumo, LinhaDivida } from "./components";
@@ -40,7 +49,10 @@ import {
 const COOLDOWN_STATUS_MS = 450;
 
 export default function DividasFixas() {
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, "DividasFixas">>();
+  const route =
+    useRoute<NativeStackScreenProps<RootStackParamList, "DividasFixas">["route"]>();
   const finance = useFinance();
 
   const [busca, setBusca] = useState("");
@@ -49,9 +61,23 @@ export default function DividasFixas() {
   const [atualizando, setAtualizando] = useState<Set<string>>(() => new Set());
   const [dividaConfirmandoPagamento, setDividaConfirmandoPagamento] =
     useState<ItemDivida | null>(null);
+  const [modalEdicaoDivida, setModalEdicaoDivida] = useState(false);
+  const [dividaEditando, setDividaEditando] = useState<ItemDivida | null>(null);
+  const [prefillDivida, setPrefillDivida] =
+    useState<PrefillDividaParcelada | null>(null);
+  const [prefillAplicado, setPrefillAplicado] = useState("");
   const [erroAtualizacao, setErroAtualizacao] = useState(false);
 
-  const { dividas, ocorrenciasDividas, competenciaAtual, modoEscuro } = finance;
+  const {
+    dividas,
+    ocorrenciasDividas,
+    competenciaAtual,
+    modoEscuro,
+    adicionarDivida,
+    editarDivida,
+    excluirDivida,
+    alterarStatusDivida,
+  } = finance;
 
   const cores = useMemo(() => temaCores(modoEscuro), [modoEscuro]);
   const styles = useMemo(() => createStyles(modoEscuro), [modoEscuro]);
@@ -149,6 +175,40 @@ export default function DividasFixas() {
     void marcarComoPago(dividaConfirmandoPagamento);
   }
 
+  useEffect(() => {
+    const params = route.params;
+
+    if (!params?.abrirCadastro) {
+      return;
+    }
+
+    const chave = JSON.stringify(params);
+
+    if (chave === prefillAplicado) {
+      return;
+    }
+
+    const inicio =
+      params.mesInicio && params.anoInicio
+        ? `${String(params.mesInicio).padStart(2, "0")}/${params.anoInicio}`
+        : undefined;
+
+    setDividaEditando(null);
+    setPrefillDivida({
+      nome: params.nome,
+      valor: params.valor,
+      inicio,
+    });
+    setModalEdicaoDivida(true);
+    setPrefillAplicado(chave);
+  }, [prefillAplicado, route.params]);
+
+  function abrirEdicaoDivida(item: ItemDivida) {
+    setPrefillDivida(null);
+    setDividaEditando(item);
+    setModalEdicaoDivida(true);
+  }
+
   const header = (
     <>
       <View style={styles.header}>
@@ -231,6 +291,32 @@ export default function DividasFixas() {
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.screen}>
+      <DividasFixasModal
+        visivel={modalEdicaoDivida}
+        dividas={dividas}
+        prefillDivida={prefillDivida}
+        dividaInicial={dividaEditando?.divida ?? null}
+        onFechar={() => {
+          setModalEdicaoDivida(false);
+          setDividaEditando(null);
+          setPrefillDivida(null);
+        }}
+        onSalvar={(dados, id) => {
+          if (id) {
+            void editarDivida(id, dados);
+            return;
+          }
+
+          void adicionarDivida(dados);
+        }}
+        onExcluir={(id) => {
+          void excluirDivida(id);
+        }}
+        onAlterarStatus={(id, ativa) => {
+          void alterarStatusDivida(id, ativa);
+        }}
+      />
+
       <ConfirmacaoAlert
         visivel={Boolean(dividaConfirmandoPagamento)}
         tipo="success"
@@ -273,7 +359,11 @@ export default function DividasFixas() {
               const valor = valorDaDivida(item);
 
               return (
-                <React.Fragment key={item.id}>
+                <SwipeAction
+                  key={item.id}
+                  onEdit={() => abrirEdicaoDivida(item)}
+                  editLabel="Editar"
+                >
                   <LinhaDivida
                     divida={item.divida}
                     valor={valor}
@@ -293,7 +383,7 @@ export default function DividasFixas() {
                   {indice < grupo.itens.length - 1 ? (
                     <View style={styles.separadorCard} />
                   ) : null}
-                </React.Fragment>
+                </SwipeAction>
               );
             })}
           </View>

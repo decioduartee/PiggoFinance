@@ -20,6 +20,7 @@ import {
 } from "lucide-react-native";
 import ConfirmacaoAlert from "../../ConfirmacaoAlert";
 import SwipeAction from "../../SwipeAction";
+import { filtrarSalariosPorCompetencia } from "../../../features/financas/totais";
 import { LIME, PURPLE, temaCores } from "../../../theme/colors";
 import useFinance from "../../../hooks/useFinance";
 import { formatBRL, textoParaValorBRL } from "../../../utils/formatadores";
@@ -69,7 +70,7 @@ export default function FluxoCaixaModal({
     null,
   );
 
-  const { modoEscuro } = useFinance();
+  const { competenciaAtual, modoEscuro } = useFinance();
   const cores = temaCores(modoEscuro);
   const insets = useSafeAreaInsets();
   const styles = useMemo(
@@ -121,8 +122,11 @@ export default function FluxoCaixaModal({
   const valorExibido = valor === "" ? "0,00" : formatBRL(Number(valor));
 
   const totalSalarios = useMemo(() => {
-    return salarios.reduce((soma, item) => soma + item.valor, 0);
-  }, [salarios]);
+    return filtrarSalariosPorCompetencia(salarios, competenciaAtual).reduce(
+      (soma, item) => soma + item.valor,
+      0,
+    );
+  }, [competenciaAtual, salarios]);
 
   const totalDividas = useMemo(() => {
     return dividas

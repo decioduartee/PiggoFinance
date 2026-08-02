@@ -6,8 +6,27 @@ export function filtrarSalariosPorCompetencia(
   salarios: Salario[],
   competencia: string,
 ) {
-  return salarios.filter(
-    (salario) => normalizarCompetencia(salario.data) === competencia,
+  const salariosValidos = salarios.filter((salario) => {
+    const competenciaSalario = normalizarCompetencia(salario.data);
+
+    return competenciaSalario && competenciaSalario <= competencia;
+  });
+
+  if (salariosValidos.length === 0) {
+    return [];
+  }
+
+  const ultimaCompetencia = salariosValidos.reduce(
+    (ultima, salario) => {
+      const competenciaSalario = normalizarCompetencia(salario.data);
+
+      return competenciaSalario > ultima ? competenciaSalario : ultima;
+    },
+    "",
+  );
+
+  return salariosValidos.filter(
+    (salario) => normalizarCompetencia(salario.data) === ultimaCompetencia,
   );
 }
 

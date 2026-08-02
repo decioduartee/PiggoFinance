@@ -264,6 +264,22 @@ export default function Inicio() {
     void alterarPagamentoDivida(dividaConfirmandoPagamentoId);
   }
 
+  function abrirCadastroDividaParcelada(dados: {
+    nome?: string;
+    valor?: number;
+    data: Date;
+  }) {
+    setModalGasto(false);
+
+    navigation.navigate("DividasFixas", {
+      abrirCadastro: true,
+      nome: dados.nome,
+      valor: dados.valor,
+      mesInicio: dados.data.getMonth() + 1,
+      anoInicio: dados.data.getFullYear(),
+    });
+  }
+
   // ==========================================================
   // Gastos do mês
   // ==========================================================
@@ -371,6 +387,10 @@ export default function Inicio() {
         visivel={modalDividas}
         dividas={dividas}
         onFechar={() => setModalDividas(false)}
+        onVerMaisDividas={() => {
+          setModalDividas(false);
+          navigation.navigate("DividasFixas");
+        }}
         // ====================================================
         // Criar / editar
         // ====================================================
@@ -410,6 +430,7 @@ export default function Inicio() {
           setModalGasto(false);
           void adicionarTransacao(transacao);
         }}
+        onAbrirDividaParcelada={abrirCadastroDividaParcelada}
       />
 
       {/* ==================================================== */}

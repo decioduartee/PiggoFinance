@@ -14,7 +14,13 @@ import {
   View,
 } from "react-native";
 
-import { CreditCard, Repeat } from "lucide-react-native";
+import {
+  CalendarDays,
+  ChevronDown,
+  CreditCard,
+  Repeat,
+} from "lucide-react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -44,13 +50,25 @@ type Props = {
 
   dividas: Divida[];
 
+  prefillDivida?: PrefillDividaParcelada | null;
+
+  dividaInicial?: Divida | null;
+
   onFechar: () => void;
+
+  onVerMaisDividas?: () => void;
 
   onSalvar: (divida: NovaDivida, id?: string) => void | Promise<void>;
 
   onExcluir: (id: string) => void | Promise<void>;
 
   onAlterarStatus: (id: string, ativa: boolean) => void | Promise<void>;
+};
+
+export type PrefillDividaParcelada = {
+  nome?: string;
+  valor?: number;
+  inicio?: string;
 };
 
 // ==========================================================
@@ -109,6 +127,20 @@ function inicioParaTela(valor?: string) {
     return "";
   }
 
+  const texto = String(valor).trim();
+
+  const mesAno = texto.match(/^(\d{2})\/(\d{4})$/);
+
+  if (mesAno) {
+    return `${mesAno[1]}/${mesAno[2]}`;
+  }
+
+  const dataBR = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+
+  if (dataBR) {
+    return `${dataBR[2]}/${dataBR[3]}`;
+  }
+
   /*
    * Aceita:
    *
@@ -117,7 +149,7 @@ function inicioParaTela(valor?: string) {
    * 2026-08-01T03:00:00.000Z
    */
 
-  const match = String(valor).match(/^(\d{4})-(\d{2})/);
+  const match = texto.match(/^(\d{4})-(\d{2})/);
 
   if (!match) {
     return "";
@@ -126,16 +158,46 @@ function inicioParaTela(valor?: string) {
   return `${match[2]}/${match[1]}`;
 }
 
-function formatarInicio(texto: string) {
-  const numeros = texto.replace(/\D/g, "");
-
-  const limitado = numeros.slice(0, 6);
-
-  if (limitado.length <= 2) {
-    return limitado;
+function inicioParaData(valor?: string | null) {
+  if (!valor) {
+    return new Date();
   }
 
-  return `${limitado.slice(0, 2)}/` + `${limitado.slice(2)}`;
+  const texto = String(valor).trim();
+  const tela = texto.match(/^(\d{2})\/(\d{4})$/);
+
+  if (tela) {
+    return new Date(Number(tela[2]), Number(tela[1]) - 1, 1);
+  }
+
+  const dataBR = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+
+  if (dataBR) {
+    return new Date(Number(dataBR[3]), Number(dataBR[2]) - 1, 1);
+  }
+
+  const iso = texto.match(/^(\d{4})-(\d{2})/);
+
+  if (iso) {
+    return new Date(Number(iso[1]), Number(iso[2]) - 1, 1);
+  }
+
+  const data = new Date(texto);
+
+  return Number.isNaN(data.getTime())
+    ? new Date()
+    : new Date(data.getFullYear(), data.getMonth(), 1);
+}
+
+function dataParaInicioTela(data: Date) {
+  if (Number.isNaN(data.getTime())) {
+    return "";
+  }
+
+  const mes = String(data.getMonth() + 1).padStart(2, "0");
+  const ano = data.getFullYear();
+
+  return `${mes}/${ano}`;
 }
 
 function ehIdTemporario(id: string) {
@@ -149,7 +211,10 @@ function ehIdTemporario(id: string) {
 export default function DividasFixasModal({
   visivel,
   dividas,
+  prefillDivida,
+  dividaInicial,
   onFechar,
+  onVerMaisDividas,
   onSalvar,
   onExcluir,
   onAlterarStatus,
@@ -171,6 +236,10 @@ export default function DividasFixasModal({
   const [parcelasPagas, setParcelasPagas] = useState("");
 
   const [inicio, setInicio] = useState("");
+
+  const [inicioData, setInicioData] = useState<Date | null>(null);
+
+  const [mostrarInicioPicker, setMostrarInicioPicker] = useState(false);
 
   const [vencimento, setVencimento] = useState("");
 
@@ -204,8 +273,42 @@ export default function DividasFixasModal({
   useEffect(() => {
     if (!visivel) {
       limpar();
+      return;
     }
-  }, [visivel]);
+
+    if (dividaInicial) {
+      editar(dividaInicial);
+      return;
+    }
+
+    if (prefillDivida) {
+      aplicarPrefill(prefillDivida);
+    }
+  }, [dividaInicial, prefillDivida, visivel]);
+
+  function aplicarPrefill(dados: PrefillDividaParcelada) {
+    setId(null);
+
+    setNome(dados.nome ?? "");
+
+    setValor(dados.valor != null ? String(dados.valor) : "");
+
+    setParcelada(true);
+
+    setParcelas("");
+
+    setParcelasPagas("");
+
+    const inicioPrefill = dados.inicio ?? dataParaInicioTela(new Date());
+
+    setInicio(inicioPrefill);
+
+    setInicioData(inicioParaData(inicioPrefill));
+
+    setVencimento("");
+
+    setDividaExcluindo(null);
+  }
 
   function limpar() {
     setId(null);
@@ -221,6 +324,10 @@ export default function DividasFixasModal({
     setParcelasPagas("");
 
     setInicio("");
+
+    setInicioData(null);
+
+    setMostrarInicioPicker(false);
 
     setVencimento("");
 
@@ -267,7 +374,11 @@ export default function DividasFixasModal({
       item.parcelasPagas != null ? String(item.parcelasPagas) : "",
     );
 
-    setInicio(inicioParaTela(item.inicio));
+    const inicioTela = inicioParaTela(item.inicio);
+
+    setInicio(inicioTela);
+
+    setInicioData(inicioParaData(inicioTela || item.inicio));
 
     setVencimento(item.vencimento != null ? String(item.vencimento) : "");
   }
@@ -494,6 +605,13 @@ export default function DividasFixasModal({
       .reduce((soma, item) => soma + Number(item.valor || 0), 0);
   }, [dividas]);
 
+  const dividasVisiveis = useMemo(
+    () => dividas.slice(0, 2),
+    [dividas],
+  );
+
+  const mostrarVerMais = dividas.length > dividasVisiveis.length;
+
   // ========================================================
   // RENDER
   // ========================================================
@@ -540,7 +658,7 @@ export default function DividasFixasModal({
                 </View>
               )}
 
-              {dividas.map((item) => {
+              {dividasVisiveis.map((item) => {
                 const sincronizando = ehIdTemporario(item.id);
 
                 const card = (
@@ -632,6 +750,18 @@ export default function DividasFixasModal({
                   </SwipeAction>
                 );
               })}
+
+              {mostrarVerMais && onVerMaisDividas ? (
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  style={styles.botaoVerMais}
+                  onPress={onVerMaisDividas}
+                >
+                  <Text style={styles.botaoVerMaisTexto}>
+                    Ver mais dívidas
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
 
               {/* =========================================== */}
               {/* FORMULÁRIO */}
@@ -734,27 +864,60 @@ export default function DividasFixasModal({
 
                   {/* MÊS INICIAL */}
 
-                  <TextInput
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    disabled={editando}
                     style={[
-                      styles.input,
+                      styles.inputData,
                       editando && {
                         opacity: 0.5,
                       },
                     ]}
-                    placeholder="Mês inicial (MM/AAAA)"
-                    placeholderTextColor={cores.GRAY}
-                    keyboardType="number-pad"
-                    value={inicio}
-                    editable={!editando}
-                    onChangeText={(texto) => {
-                      if (editando) {
-                        return;
-                      }
+                    onPress={() => setMostrarInicioPicker(true)}
+                  >
+                    <CalendarDays size={18} color={cores.GRAY} />
 
-                      setInicio(formatarInicio(texto));
-                    }}
-                    maxLength={7}
-                  />
+                    <Text
+                      style={[
+                        styles.inputDataTexto,
+                        !inicio && {
+                          color: cores.GRAY,
+                        },
+                      ]}
+                    >
+                      {inicio || "Mês inicial"}
+                    </Text>
+
+                    <ChevronDown size={18} color={cores.GRAY} />
+                  </TouchableOpacity>
+
+                  {mostrarInicioPicker && (
+                    <DateTimePicker
+                      value={inicioData ?? inicioParaData(inicio)}
+                      mode="date"
+                      display={Platform.OS === "ios" ? "spinner" : "calendar"}
+                      onChange={(event, selectedDate) => {
+                        if (Platform.OS === "android") {
+                          setMostrarInicioPicker(false);
+                        }
+
+                        if (event.type === "dismissed") {
+                          return;
+                        }
+
+                        if (selectedDate) {
+                          const dataInicio = new Date(
+                            selectedDate.getFullYear(),
+                            selectedDate.getMonth(),
+                            1,
+                          );
+
+                          setInicioData(dataInicio);
+                          setInicio(dataParaInicioTela(dataInicio));
+                        }
+                      }}
+                    />
+                  )}
                 </>
               )}
 

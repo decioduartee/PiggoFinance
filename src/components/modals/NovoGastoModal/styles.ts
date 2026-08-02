@@ -84,6 +84,7 @@ export function createStyles(modoEscuro: boolean, bottomInset = 0) {
     },
 
     valorRapidoSelecionado: {
+      backgroundColor: C.PURPLELIGHT ?? PURPLELIGHT,
       borderColor: PURPLE,
     },
 
@@ -119,6 +120,25 @@ export function createStyles(modoEscuro: boolean, bottomInset = 0) {
       fontSize: 12,
       lineHeight: 17,
       marginBottom: 16,
+    },
+
+    botaoDividaParcelada: {
+      height: 46,
+      borderRadius: 14,
+      backgroundColor: C.PURPLELIGHT ?? PURPLELIGHT,
+      borderWidth: 1,
+      borderColor: PURPLE,
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: 8,
+      marginBottom: 16,
+    },
+
+    botaoDividaParceladaTexto: {
+      color: PURPLE,
+      fontSize: 15,
+      fontWeight: "700",
     },
 
     label: {

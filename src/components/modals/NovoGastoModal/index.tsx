@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { CalendarDays, ChevronDown } from "lucide-react-native";
+import { CalendarDays, ChevronDown, CreditCard } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Categoria,
@@ -29,6 +29,11 @@ type Props = {
   transacao?: Transacao | null;
   onFechar: () => void;
   onSalvar: (transacao: Transacao) => void;
+  onAbrirDividaParcelada?: (dados: {
+    nome?: string;
+    valor?: number;
+    data: Date;
+  }) => void;
 };
 
 const valoresRapidos = [10, 20, 50, 100];
@@ -46,7 +51,38 @@ function dataISO(data: Date) {
 }
 
 function dataBR(data: Date) {
+  if (Number.isNaN(data.getTime())) {
+    return "Selecionar data";
+  }
+
   return data.toLocaleDateString("pt-BR");
+}
+
+function criarDataSegura(valor?: string | null) {
+  if (!valor) {
+    return new Date();
+  }
+
+  const texto = String(valor);
+  const isoCurto = texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+  if (isoCurto) {
+    return new Date(
+      Number(isoCurto[1]),
+      Number(isoCurto[2]) - 1,
+      Number(isoCurto[3]),
+    );
+  }
+
+  const br = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+
+  if (br) {
+    return new Date(Number(br[3]), Number(br[2]) - 1, Number(br[1]));
+  }
+
+  const data = new Date(texto);
+
+  return Number.isNaN(data.getTime()) ? new Date() : data;
 }
 
 export default function NovoGastoModal({
@@ -54,6 +90,7 @@ export default function NovoGastoModal({
   transacao,
   onFechar,
   onSalvar,
+  onAbrirDividaParcelada,
 }: Props) {
   const [nome, setNome] = useState("");
   const [valor, setValor] = useState("");
@@ -77,7 +114,7 @@ export default function NovoGastoModal({
       setNome(transacao.nome);
       setValor(String(Math.abs(transacao.valor)));
       setCategoria(transacao.categoria as Categoria);
-      setData(new Date(transacao.data + "T00:00:00"));
+      setData(criarDataSegura(transacao.data));
     } else {
       limpar();
     }
@@ -124,6 +161,23 @@ export default function NovoGastoModal({
 
   function selecionarValorRapido(valorSelecionado: number) {
     setValor(String(valorSelecionado));
+  }
+
+  function abrirDividaParcelada() {
+    if (!onAbrirDividaParcelada) {
+      return;
+    }
+
+    Keyboard.dismiss();
+    setMostrarCalendario(false);
+
+    const numero = Number(valor);
+
+    onAbrirDividaParcelada({
+      nome: nome.trim() || undefined,
+      valor: Number.isNaN(numero) || numero <= 0 ? undefined : numero,
+      data: data ?? hoje(),
+    });
   }
 
   const valorExibido = valor === "" ? "0,00" : formatBRL(Number(valor));
@@ -198,51 +252,63 @@ export default function NovoGastoModal({
                 onChangeText={setNome}
               />
 
-            <TouchableOpacity
-              activeOpacity={0.85}
-              style={styles.dataBox}
-              onPress={() => setMostrarCalendario(true)}
-            >
-              <CalendarDays size={18} color={placeholderColor} />
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={styles.dataBox}
+                onPress={() => setMostrarCalendario(true)}
+              >
+                <CalendarDays size={18} color={placeholderColor} />
 
-              <Text style={styles.dataTexto}>
-                {data ? dataBR(data) : `Selecionar data`}
-              </Text>
+                <Text style={styles.dataTexto}>
+                  {data ? dataBR(data) : `Selecionar data`}
+                </Text>
 
-              <ChevronDown size={18} color={placeholderColor} />
-            </TouchableOpacity>
+                <ChevronDown size={18} color={placeholderColor} />
+              </TouchableOpacity>
 
-            <Text style={styles.ajudaData}>
-              Você pode selecionar qualquer data. Se não selecionar nada, será
-              usada a data de hoje.
-            </Text>
+              {onAbrirDividaParcelada && (
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  style={styles.botaoDividaParcelada}
+                  onPress={abrirDividaParcelada}
+                >
+                  <CreditCard
+                    size={18}
+                    color={styles.botaoDividaParceladaTexto.color}
+                  />
 
-            {mostrarCalendario && (
-              <DateTimePicker
-                value={data ?? hoje()}
-                mode="date"
-                display={Platform.OS === "ios" ? "spinner" : "calendar"}
-                onChange={(event, selectedDate) => {
-                  if (Platform.OS === "android") {
-                    setMostrarCalendario(false);
-                  }
+                  <Text style={styles.botaoDividaParceladaTexto}>
+                    Dívida Parcelada
+                  </Text>
+                </TouchableOpacity>
+              )}
 
-                  if (event.type === "dismissed") {
-                    return;
-                  }
+              {mostrarCalendario && (
+                <DateTimePicker
+                  value={data ?? hoje()}
+                  mode="date"
+                  display={Platform.OS === "ios" ? "spinner" : "calendar"}
+                  onChange={(event, selectedDate) => {
+                    if (Platform.OS === "android") {
+                      setMostrarCalendario(false);
+                    }
 
-                  if (selectedDate) {
-                    setData(selectedDate);
-                  }
-                }}
-              />
-            )}
+                    if (event.type === "dismissed") {
+                      return;
+                    }
 
-            <Text style={styles.label}>Categoria</Text>
+                    if (selectedDate) {
+                      setData(selectedDate);
+                    }
+                  }}
+                />
+              )}
 
-            <View style={styles.categorias}>
-              {categorias.map((item) => {
-                const selecionado = categoria === item.nome;
+              <Text style={styles.label}>Categoria</Text>
+
+              <View style={styles.categorias}>
+                {categorias.map((item) => {
+                  const selecionado = categoria === item.nome;
 
                 return (
                   <TouchableOpacity

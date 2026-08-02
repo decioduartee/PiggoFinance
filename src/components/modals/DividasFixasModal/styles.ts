@@ -98,6 +98,23 @@ export const createStyles = (
       fontSize: 13,
     },
 
+    botaoVerMais: {
+      height: 42,
+      borderRadius: 14,
+      backgroundColor: C.BG,
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: PURPLE,
+    },
+
+    botaoVerMaisTexto: {
+      color: PURPLE,
+      fontSize: 14,
+      fontWeight: "700",
+    },
+
     input: {
       height: 52,
       backgroundColor: C.BG,
@@ -105,6 +122,23 @@ export const createStyles = (
       paddingHorizontal: 16,
       color: C.INK,
       marginBottom: 12,
+      fontSize: 15,
+    },
+
+    inputData: {
+      height: 52,
+      backgroundColor: C.BG,
+      borderRadius: 14,
+      paddingHorizontal: 16,
+      marginBottom: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+    },
+
+    inputDataTexto: {
+      flex: 1,
+      color: C.INK,
       fontSize: 15,
     },
 

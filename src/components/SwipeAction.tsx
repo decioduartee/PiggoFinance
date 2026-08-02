@@ -15,7 +15,9 @@ import Animated, {
 type Props = {
   children: React.ReactNode;
   onEdit: () => void;
-  onDelete: () => void;
+  onDelete?: () => void;
+  editLabel?: string;
+  deleteLabel?: string;
 };
 
 const LIMITE = 90;
@@ -25,6 +27,8 @@ export default function SwipeAction({
   children,
   onEdit,
   onDelete,
+  editLabel = "Editar",
+  deleteLabel = "Excluir",
 }: Props) {
   const translateX = useSharedValue(0);
 
@@ -47,7 +51,7 @@ export default function SwipeAction({
       if (translateX.value > LIMITE) {
         runOnJS(onEdit)();
       } else if (translateX.value < -LIMITE) {
-        runOnJS(onDelete)();
+        runOnJS(onDelete ?? onEdit)();
       }
 
       translateX.value = withSpring(0);
@@ -68,8 +72,12 @@ export default function SwipeAction({
   return (
     <View style={styles.container}>
       <View style={styles.background}>
-        <Text style={styles.edit}>Editar</Text>
-        <Text style={styles.delete}>Excluir</Text>
+        <Text style={styles.edit}>{editLabel}</Text>
+        {onDelete ? (
+          <Text style={styles.delete}>{deleteLabel}</Text>
+        ) : (
+          <Text style={styles.edit}>{editLabel}</Text>
+        )}
       </View>
 
       <GestureDetector gesture={pan}>

@@ -25,7 +25,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import Valor from "../../components/ValorBlur";
 import ConfirmacaoAlert from "../../components/ConfirmacaoAlert";
+import DividasFixasModal from "../../components/modals/DividasFixasModal";
 import NovoGastoModal from "../../components/modals/NovoGastoModal";
+import SwipeAction from "../../components/SwipeAction";
 import type {
   Divida,
   OcorrenciaDivida,
@@ -196,6 +198,8 @@ export default function Historico() {
     useState<Transacao | null>(null);
   const [movimentacaoExcluindo, setMovimentacaoExcluindo] =
     useState<Transacao | null>(null);
+  const [modalEditarDivida, setModalEditarDivida] = useState(false);
+  const [dividaEditando, setDividaEditando] = useState<Divida | null>(null);
   const [ordem, setOrdem] = useState<Ordem>("recentes");
   const [mesSelecionado, setMesSelecionado] = useState<string | null>(null);
 
@@ -210,6 +214,10 @@ export default function Historico() {
     competenciaAtual,
     editarTransacao,
     excluirTransacao,
+    adicionarDivida,
+    editarDivida,
+    excluirDivida,
+    alterarStatusDivida,
   } = useFinance();
 
   const cores = useMemo(() => temaCores(modoEscuro), [modoEscuro]);
@@ -675,6 +683,13 @@ export default function Historico() {
     setModalEditar(true);
   }
 
+  function abrirEdicaoDivida(divida: Divida) {
+    if (divida.id.includes("TEMP_")) return;
+
+    setDividaEditando(divida);
+    setModalEditarDivida(true);
+  }
+
   function excluir(id: string) {
     if (id.includes("TEMP_")) return;
 
@@ -852,6 +867,30 @@ export default function Historico() {
         }}
       />
 
+      <DividasFixasModal
+        visivel={modalEditarDivida}
+        dividas={dividas}
+        dividaInicial={dividaEditando}
+        onFechar={() => {
+          setModalEditarDivida(false);
+          setDividaEditando(null);
+        }}
+        onSalvar={(dados, id) => {
+          if (id) {
+            void editarDivida(id, dados);
+            return;
+          }
+
+          void adicionarDivida(dados);
+        }}
+        onExcluir={(id) => {
+          void excluirDivida(id);
+        }}
+        onAlterarStatus={(id, ativa) => {
+          void alterarStatusDivida(id, ativa);
+        }}
+      />
+
       <ConfirmacaoAlert
         visivel={Boolean(movimentacaoExcluindo)}
         tipo="danger"
@@ -910,7 +949,12 @@ export default function Historico() {
                   : "Dívida fixa";
 
               return (
-                <View key={item.id} style={styles.linha}>
+                <SwipeAction
+                  key={item.id}
+                  onEdit={() => abrirEdicaoDivida(divida)}
+                  editLabel="Editar"
+                >
+                <View style={styles.linha}>
                   <View style={styles.iconeDivida}>
                     <Repeat size={20} color={PURPLE} />
                   </View>
@@ -950,6 +994,7 @@ export default function Historico() {
                     style={styles.valor}
                   />
                 </View>
+                </SwipeAction>
               );
             })}
           </View>
