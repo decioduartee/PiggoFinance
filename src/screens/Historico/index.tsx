@@ -541,12 +541,6 @@ export default function Historico() {
         );
       })
       .sort((a, b) => {
-        const comparacao = String(a.data).localeCompare(String(b.data));
-
-        if (comparacao !== 0) {
-          return ordem === "recentes" ? -comparacao : comparacao;
-        }
-
         const timestampA = timestampItemHistorico(a);
         const timestampB = timestampItemHistorico(b);
 
@@ -554,6 +548,12 @@ export default function Historico() {
           return ordem === "recentes"
             ? timestampB - timestampA
             : timestampA - timestampB;
+        }
+
+        const comparacao = String(a.data).localeCompare(String(b.data));
+
+        if (comparacao !== 0) {
+          return ordem === "recentes" ? -comparacao : comparacao;
         }
 
         return ordem === "recentes"
