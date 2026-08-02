@@ -60,7 +60,7 @@ export default function DividasFixas() {
 
   const [busca, setBusca] = useState("");
   const [oculto, setOculto] = useState(false);
-  const [ordem, setOrdem] = useState<Ordem>("antigos");
+  const [ordem, setOrdem] = useState<Ordem>("recentes");
   const [modoLista, setModoLista] = useState<ModoListaDividas>("mes");
   const [atualizando, setAtualizando] = useState<Set<string>>(() => new Set());
   const [dividaConfirmandoPagamento, setDividaConfirmandoPagamento] =
@@ -356,8 +356,8 @@ export default function DividasFixas() {
         <ArrowDownUp size={15} color={cores.GRAY} style={{ marginRight: 6 }} />
         <Text style={styles.ordenacaoTexto}>
           {ordem === "recentes"
-            ? "Vencimentos mais distantes"
-            : "Próximos vencimentos"}
+            ? "Dívidas mais recentes"
+            : "Dívidas mais antigas"}
         </Text>
       </TouchableOpacity>
     </>

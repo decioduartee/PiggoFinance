@@ -250,11 +250,47 @@ export function pesquisarDividas(lista: ItemDivida[], texto: string) {
   });
 }
 
+function timestampCadastroDivida(item: ItemDivida) {
+  const datas = [
+    item.divida.criadoEm,
+    item.divida.atualizadoEm,
+    item.ocorrencia.criadoEm,
+    item.ocorrencia.atualizadoEm,
+    item.divida.inicio,
+    item.data,
+  ];
+
+  for (const data of datas) {
+    if (!data) {
+      continue;
+    }
+
+    const timestamp = Date.parse(data);
+
+    if (!Number.isNaN(timestamp)) {
+      return timestamp;
+    }
+  }
+
+  return 0;
+}
+
 export function ordenarDividas(lista: ItemDivida[], ordem: Ordem) {
   return [...lista].sort((a, b) => {
-    const comparacao = a.data.localeCompare(b.data);
-    if (comparacao !== 0) {
-      return ordem === "recentes" ? -comparacao : comparacao;
+    const cadastroA = timestampCadastroDivida(a);
+    const cadastroB = timestampCadastroDivida(b);
+
+    if (cadastroA !== cadastroB) {
+      return ordem === "recentes"
+        ? cadastroB - cadastroA
+        : cadastroA - cadastroB;
+    }
+
+    const comparacaoVencimento = a.data.localeCompare(b.data);
+    if (comparacaoVencimento !== 0) {
+      return ordem === "recentes"
+        ? -comparacaoVencimento
+        : comparacaoVencimento;
     }
 
     return String(a.divida.nome ?? "").localeCompare(
