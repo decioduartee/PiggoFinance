@@ -11,6 +11,7 @@ import {
 import { normalizarDataISO } from "../../utils/formatadores";
 
 export type Ordem = "recentes" | "antigos";
+export type ModoListaDividas = "mes" | "todas";
 
 export type ItemDivida = {
   id: string;
@@ -154,6 +155,73 @@ export function montarDividasDoMes({
         prevista,
       };
     });
+}
+
+function ordenarOcorrenciasMaisRecentes(
+  a: OcorrenciaDivida,
+  b: OcorrenciaDivida,
+) {
+  const competencia = chaveMes(b.competencia).localeCompare(
+    chaveMes(a.competencia),
+  );
+
+  if (competencia !== 0) {
+    return competencia;
+  }
+
+  const dataB = String(b.atualizadoEm || b.criadoEm || b.vencimento || "");
+  const dataA = String(a.atualizadoEm || a.criadoEm || a.vencimento || "");
+
+  return dataB.localeCompare(dataA);
+}
+
+export function montarTodasDividas({
+  dividas,
+  ocorrencias,
+  competenciaAtual,
+}: {
+  dividas: Divida[];
+  ocorrencias: OcorrenciaDivida[];
+  competenciaAtual: string;
+}) {
+  const ocorrenciasPorDivida = ocorrencias.reduce(
+    (mapa, ocorrencia) => {
+      const lista = mapa.get(ocorrencia.dividaId) ?? [];
+      lista.push(ocorrencia);
+      mapa.set(ocorrencia.dividaId, lista);
+
+      return mapa;
+    },
+    new Map<string, OcorrenciaDivida[]>(),
+  );
+
+  return dividas.map<ItemDivida>((divida) => {
+    const ocorrenciasDaDivida = [
+      ...(ocorrenciasPorDivida.get(divida.id) ?? []),
+    ].sort(ordenarOcorrenciasMaisRecentes);
+    const ocorrenciaAtual =
+      ocorrenciasDaDivida.find(
+        (item) => chaveMes(item.competencia) === competenciaAtual,
+      ) ?? null;
+    const ocorrenciaReal = ocorrenciaAtual ?? ocorrenciasDaDivida[0] ?? null;
+    const competenciaBase =
+      chaveMes(ocorrenciaReal?.competencia) ||
+      chaveMes(divida.inicio) ||
+      competenciaAtual;
+    const ocorrencia =
+      ocorrenciaReal ?? criarOcorrenciaPendente(divida, competenciaBase);
+    const data =
+      ocorrencia.vencimento ||
+      dataVencimentoDaCompetencia(competenciaBase, divida);
+
+    return {
+      id: `${divida.id}_todas`,
+      data,
+      divida,
+      ocorrencia,
+      prevista: !ocorrenciaReal,
+    };
+  });
 }
 
 export function pesquisarDividas(lista: ItemDivida[], texto: string) {

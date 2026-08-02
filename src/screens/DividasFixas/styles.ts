@@ -69,7 +69,7 @@ export function createStyles(modoEscuro: boolean) {
       borderRadius: 18,
       paddingHorizontal: 16,
       height: 54,
-      marginBottom: 16,
+      marginBottom: 10,
     },
 
     buscaInput: {
@@ -77,6 +77,37 @@ export function createStyles(modoEscuro: boolean) {
       marginLeft: 10,
       fontSize: 15,
       color: cores.INK,
+    },
+
+    modoLista: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: cores.CARD,
+      borderRadius: 18,
+      padding: 4,
+      marginBottom: 16,
+    },
+
+    modoListaBotao: {
+      flex: 1,
+      height: 38,
+      borderRadius: 14,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+
+    modoListaBotaoAtivo: {
+      backgroundColor: PURPLE,
+    },
+
+    modoListaTexto: {
+      color: cores.GRAY,
+      fontSize: 13,
+      fontWeight: "800",
+    },
+
+    modoListaTextoAtivo: {
+      color: "#fff",
     },
 
     resumo: {
@@ -210,6 +241,10 @@ export function createStyles(modoEscuro: boolean) {
 
     statusButtonAtrasada: {
       backgroundColor: CORAL,
+    },
+
+    statusButtonInativa: {
+      backgroundColor: cores.GRAY,
     },
 
     statusTexto: {

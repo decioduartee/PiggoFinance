@@ -71,6 +71,8 @@ export function LinhaDivida({
   atrasada,
   oculto,
   atualizando,
+  statusDesabilitado = false,
+  statusTexto,
   onPressStatus,
   cores,
   styles,
@@ -82,12 +84,16 @@ export function LinhaDivida({
   atrasada: boolean;
   oculto: boolean;
   atualizando: boolean;
+  statusDesabilitado?: boolean;
+  statusTexto?: string;
   onPressStatus: () => void;
   cores: ThemeColors;
   styles: DividasStyles;
 }) {
   const parcelada = dividaParcelada(divida);
   const total = totalParcelas(divida);
+  const inativa = divida.ativa === false;
+  const statusBloqueado = atualizando || statusDesabilitado || inativa;
 
   return (
     <View style={[styles.card, { backgroundColor: cores.CARD }]}>
@@ -133,21 +139,25 @@ export function LinhaDivida({
       ) : (
         <TouchableOpacity
           activeOpacity={0.78}
-          disabled={atualizando}
+          disabled={statusBloqueado}
           onPress={onPressStatus}
           style={[
             styles.statusButton,
-            atrasada
-              ? styles.statusButtonAtrasada
-              : styles.statusButtonPendente,
+            inativa
+              ? styles.statusButtonInativa
+              : atrasada
+                ? styles.statusButtonAtrasada
+                : styles.statusButtonPendente,
             {
-              borderColor: atrasada ? CORAL : PURPLE,
+              borderColor: inativa ? cores.GRAY : atrasada ? CORAL : PURPLE,
               opacity: atualizando ? 0.55 : 1,
             },
           ]}
         >
           <Text style={[styles.statusTexto, { color: "#fff" }]}>
-            {atrasada ? "Atrasada" : "Pendente"}
+            {inativa
+              ? "Inativa"
+              : statusTexto ?? (atrasada ? "Atrasada" : "Pendente")}
           </Text>
         </TouchableOpacity>
       )}

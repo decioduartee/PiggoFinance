@@ -35,7 +35,9 @@ import { CardResumo, LinhaDivida } from "./components";
 import { createStyles } from "./styles";
 import {
   agruparPorVencimento,
+  chaveMes,
   montarDividasDoMes,
+  montarTodasDividas,
   numeroParcelaDaCompetencia,
   ocorrenciaEstaAtrasada,
   ocorrenciaEstaPaga,
@@ -43,6 +45,7 @@ import {
   pesquisarDividas,
   valorDaDivida,
   type ItemDivida,
+  type ModoListaDividas,
   type Ordem,
 } from "./utils";
 
@@ -58,6 +61,7 @@ export default function DividasFixas() {
   const [busca, setBusca] = useState("");
   const [oculto, setOculto] = useState(false);
   const [ordem, setOrdem] = useState<Ordem>("antigos");
+  const [modoLista, setModoLista] = useState<ModoListaDividas>("mes");
   const [atualizando, setAtualizando] = useState<Set<string>>(() => new Set());
   const [dividaConfirmandoPagamento, setDividaConfirmandoPagamento] =
     useState<ItemDivida | null>(null);
@@ -97,10 +101,22 @@ export default function DividasFixas() {
     [dividas, ocorrenciasDividas, competenciaAtual],
   );
 
+  const todasDividas = useMemo(
+    () =>
+      montarTodasDividas({
+        dividas,
+        ocorrencias: ocorrenciasDividas,
+        competenciaAtual,
+      }),
+    [dividas, ocorrenciasDividas, competenciaAtual],
+  );
+
+  const itensBase = modoLista === "todas" ? todasDividas : itensDoMes;
+
   const itensFiltrados = useMemo(() => {
-    const filtrados = pesquisarDividas(itensDoMes, busca);
+    const filtrados = pesquisarDividas(itensBase, busca);
     return ordenarDividas(filtrados, ordem);
-  }, [itensDoMes, busca, ordem]);
+  }, [itensBase, busca, ordem]);
 
   const grupos = useMemo(
     () => agruparPorVencimento(itensFiltrados),
@@ -108,7 +124,7 @@ export default function DividasFixas() {
   );
 
   const resumo = useMemo(() => {
-    return itensDoMes.reduce(
+    return itensBase.reduce(
       (totais, item) => {
         const valor = valorDaDivida(item);
 
@@ -129,7 +145,7 @@ export default function DividasFixas() {
         quantidadePendentes: 0,
       },
     );
-  }, [itensDoMes]);
+  }, [itensBase]);
 
   async function marcarComoPago(item: ItemDivida) {
     if (ocorrenciaEstaPaga(item.ocorrencia) || item.prevista) {
@@ -270,6 +286,44 @@ export default function DividasFixas() {
         />
       </View>
 
+      <View style={styles.modoLista}>
+        <TouchableOpacity
+          activeOpacity={0.82}
+          onPress={() => setModoLista("mes")}
+          style={[
+            styles.modoListaBotao,
+            modoLista === "mes" && styles.modoListaBotaoAtivo,
+          ]}
+        >
+          <Text
+            style={[
+              styles.modoListaTexto,
+              modoLista === "mes" && styles.modoListaTextoAtivo,
+            ]}
+          >
+            Do mês
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          activeOpacity={0.82}
+          onPress={() => setModoLista("todas")}
+          style={[
+            styles.modoListaBotao,
+            modoLista === "todas" && styles.modoListaBotaoAtivo,
+          ]}
+        >
+          <Text
+            style={[
+              styles.modoListaTexto,
+              modoLista === "todas" && styles.modoListaTextoAtivo,
+            ]}
+          >
+            Todas
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.resumo}>
         <CardResumo
           tipo="pago"
@@ -381,7 +435,9 @@ export default function DividasFixas() {
           <Text style={styles.vazio}>
             {busca.trim()
               ? "Nenhuma dívida encontrada."
-              : "Nenhuma dívida ativa para este mês."}
+              : modoLista === "todas"
+                ? "Nenhuma dívida cadastrada."
+                : "Nenhuma dívida ativa para este mês."}
           </Text>
         }
         renderItem={({ item: grupo }) => (
@@ -392,6 +448,12 @@ export default function DividasFixas() {
               const pago = ocorrenciaEstaPaga(item.ocorrencia);
               const atrasada = ocorrenciaEstaAtrasada(item.ocorrencia);
               const valor = valorDaDivida(item);
+              const futura =
+                modoLista === "todas" &&
+                item.prevista &&
+                chaveMes(item.divida.inicio) > competenciaAtual;
+              const statusDesabilitado =
+                modoLista === "todas" && item.prevista;
 
               return (
                 <SwipeAction
@@ -407,6 +469,8 @@ export default function DividasFixas() {
                     atrasada={atrasada}
                     oculto={oculto}
                     atualizando={atualizando.has(item.divida.id)}
+                    statusDesabilitado={statusDesabilitado}
+                    statusTexto={futura ? "Futura" : undefined}
                     onPressStatus={() => alternarStatus(item)}
                     cores={cores}
                     styles={styles}
