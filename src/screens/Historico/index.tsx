@@ -213,6 +213,18 @@ function compararItensHistorico(
   b: ItemHistorico,
   ordem: Ordem,
 ) {
+  if (a.tipoItem !== b.tipoItem) {
+    const aEhTransacao = a.tipoItem === "transacao";
+
+    return ordem === "recentes"
+      ? aEhTransacao
+        ? -1
+        : 1
+      : aEhTransacao
+        ? 1
+        : -1;
+  }
+
   if (a.tipoItem === "transacao" && b.tipoItem === "transacao") {
     const timestampA = timestampItemHistorico(a);
     const timestampB = timestampItemHistorico(b);
