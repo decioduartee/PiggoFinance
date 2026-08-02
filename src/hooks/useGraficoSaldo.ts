@@ -7,12 +7,18 @@ import type {
   Transacao,
 } from "../features/financas/types";
 import {
+  criarOcorrenciaTemporaria,
+  dividaPertenceCompetencia,
   obterStatusOcorrencia,
   valorOcorrenciaDivida,
 } from "../features/financas/ocorrencias";
 import { normalizarCompetencia } from "../features/financas/competencia";
 import { filtrarSalariosPorCompetencia } from "../features/financas/totais";
-import { getMesAtualKey } from "../utils/formatadores";
+import {
+  dataLocalISO,
+  getMesAtualKey,
+  normalizarDataISO,
+} from "../utils/formatadores";
 
 export interface GraficoSaldoItem {
   label: string;
@@ -25,14 +31,6 @@ export interface GraficoSaldoItem {
   dividasPagas: number;
 }
 
-function formatarDataLocal(data: Date) {
-  const ano = data.getFullYear();
-  const mes = String(data.getMonth() + 1).padStart(2, "0");
-  const dia = String(data.getDate()).padStart(2, "0");
-
-  return `${ano}-${mes}-${dia}`;
-}
-
 function formatarDataGrafico(data: Date) {
   const dia = data.getDate();
 
@@ -43,9 +41,9 @@ function deveMostrarDia(
   dia: number,
   ultimoDia: number,
   teveGasto: boolean,
-  teveDividaPaga: boolean,
+  teveDivida: boolean,
 ) {
-  return dia === ultimoDia || teveGasto || teveDividaPaga;
+  return dia === 1 || dia === ultimoDia || teveGasto || teveDivida;
 }
 
 export default function useGraficoSaldo(
@@ -62,10 +60,9 @@ export default function useGraficoSaldo(
       normalizarCompetencia(competenciaAtual) || competenciaReal;
     const [anoAtual, mesAtualNumero] = chaveMesAtual.split("-").map(Number);
     const mesAtual = Math.max(0, (mesAtualNumero || 1) - 1);
+    const ultimoDiaMes = new Date(anoAtual, mesAtual + 1, 0).getDate();
     const diaReferencia =
-      chaveMesAtual === competenciaReal
-        ? hoje.getDate()
-        : new Date(anoAtual, mesAtual + 1, 0).getDate();
+      chaveMesAtual === competenciaReal ? hoje.getDate() : ultimoDiaMes;
     const salarioMes = filtrarSalariosPorCompetencia(
       salarios,
       chaveMesAtual,
@@ -80,12 +77,17 @@ export default function useGraficoSaldo(
       (t) =>
         t?.data &&
         t.tipo === "saida" &&
-        t.data.slice(0, 7) === chaveMesAtual &&
+        normalizarDataISO(t.data).slice(0, 7) === chaveMesAtual &&
         !Number.isNaN(Number(t.valor)),
     );
 
     const gastosPorData = transacoesValidas.reduce((mapa, item) => {
-      const data = item.data.slice(0, 10);
+      const data = normalizarDataISO(item.data);
+
+      if (!data) {
+        return mapa;
+      }
+
       const valorAtual = mapa.get(data) ?? 0;
 
       mapa.set(data, valorAtual + Math.abs(Number(item.valor)));
@@ -94,13 +96,55 @@ export default function useGraficoSaldo(
     }, new Map<string, number>());
 
     const dividasPorId = new Map(dividas.map((divida) => [divida.id, divida]));
+    const ocorrenciasReais = ocorrenciasDividas.filter(
+      (ocorrencia) =>
+        normalizarCompetencia(ocorrencia.competencia) === chaveMesAtual,
+    );
+    const dividasComOcorrenciaReal = new Set(
+      ocorrenciasReais.map((ocorrencia) => ocorrencia.dividaId),
+    );
+    const ocorrenciasProjetadas = dividas
+      .filter(
+        (divida) =>
+          !dividasComOcorrenciaReal.has(divida.id) &&
+          dividaPertenceCompetencia(divida, chaveMesAtual),
+      )
+      .map((divida) => criarOcorrenciaTemporaria(divida, chaveMesAtual))
+      .filter((ocorrencia): ocorrencia is OcorrenciaDivida =>
+        Boolean(ocorrencia),
+      );
+    const ocorrenciasDoMes = [...ocorrenciasReais, ...ocorrenciasProjetadas];
 
-    const dividasPagasPorData = ocorrenciasDividas.reduce((mapa, ocorrencia) => {
+    const dividasDoMesPorData = ocorrenciasDoMes.reduce((mapa, ocorrencia) => {
+      const divida = dividasPorId.get(ocorrencia.dividaId);
+
+      if (!divida || divida.ativa === false) {
+        return mapa;
+      }
+
+      const status = obterStatusOcorrencia(ocorrencia);
+      const dataBase =
+        status === "pago" && ocorrencia.pagoEm
+          ? normalizarDataISO(ocorrencia.pagoEm)
+          : normalizarDataISO(ocorrencia.vencimento) ||
+            `${chaveMesAtual}-01`;
+
+      if (dataBase.slice(0, 7) !== chaveMesAtual) {
+        return mapa;
+      }
+
+      const valorAtual = mapa.get(dataBase) ?? 0;
+      mapa.set(dataBase, valorAtual + valorOcorrenciaDivida(ocorrencia, divida));
+
+      return mapa;
+    }, new Map<string, number>());
+
+    const dividasPagasPorData = ocorrenciasDoMes.reduce((mapa, ocorrencia) => {
       if (obterStatusOcorrencia(ocorrencia) !== "pago" || !ocorrencia.pagoEm) {
         return mapa;
       }
 
-      const dataPagamento = ocorrencia.pagoEm.slice(0, 10);
+      const dataPagamento = normalizarDataISO(ocorrencia.pagoEm);
 
       if (dataPagamento.slice(0, 7) !== chaveMesAtual) {
         return mapa;
@@ -130,13 +174,22 @@ export default function useGraficoSaldo(
       (soma, valor) => soma + valor,
       0,
     );
+    const totalDividasMes = Array.from(dividasDoMesPorData.values()).reduce(
+      (soma, valor) => soma + valor,
+      0,
+    );
 
-    if (salarioMes <= 0 && totalGastos <= 0 && totalDividasPagas <= 0) {
+    if (
+      salarioMes <= 0 &&
+      totalGastos <= 0 &&
+      totalDividasMes <= 0 &&
+      totalDividasPagas <= 0
+    ) {
       return [];
     }
 
     const ultimoDiaComGasto = transacoesValidas.reduce((maiorDia, item) => {
-      const dia = Number(item.data.slice(8, 10));
+      const dia = Number(normalizarDataISO(item.data).slice(8, 10));
 
       if (Number.isNaN(dia)) {
         return maiorDia;
@@ -158,10 +211,25 @@ export default function useGraficoSaldo(
       0,
     );
 
+    const ultimoDiaComDividaMes = Array.from(dividasDoMesPorData.keys()).reduce(
+      (maiorDia, data) => {
+        const dia = Number(data.slice(8, 10));
+
+        if (Number.isNaN(dia)) {
+          return maiorDia;
+        }
+
+        return Math.max(maiorDia, dia);
+      },
+      0,
+    );
+
     const ultimoDia = Math.max(
       ultimoDiaComGasto,
+      ultimoDiaComDividaMes,
       ultimoDiaComDividaPaga,
       salarioMes > 0 ? diaReferencia : 0,
+      ultimoDiaMes,
     );
 
     if (ultimoDia <= 0) {
@@ -169,24 +237,27 @@ export default function useGraficoSaldo(
     }
 
     let gastosAcumulados = 0;
+    let dividasMesAcumuladas = 0;
     let dividasPagasAcumuladas = 0;
 
     return Array.from({ length: ultimoDia }, (_, index) => {
       const dia = index + 1;
       const data = new Date(anoAtual, mesAtual, dia);
-      const dataISO = formatarDataLocal(data);
+      const dataISO = dataLocalISO(data);
       const gastos = gastosPorData.get(dataISO) ?? 0;
+      const dividaMesDia = dividasDoMesPorData.get(dataISO) ?? 0;
       const dividaPagaDia = dividasPagasPorData.get(dataISO) ?? 0;
       const teveGasto = gastos > 0;
-      const teveDividaPaga = dividaPagaDia > 0;
+      const teveDivida = dividaMesDia > 0 || dividaPagaDia > 0;
       const mostrarDia = deveMostrarDia(
         dia,
         ultimoDia,
         teveGasto,
-        teveDividaPaga,
+        teveDivida,
       );
 
       gastosAcumulados += gastos;
+      dividasMesAcumuladas += dividaMesDia;
       dividasPagasAcumuladas += dividaPagaDia;
 
       return {
@@ -195,7 +266,7 @@ export default function useGraficoSaldo(
         dataFormatada: formatarDataGrafico(data),
         gastoDia: gastos,
         dividaPagaDia,
-        saldo: salarioMes - gastosAcumulados - dividasPagasAcumuladas,
+        saldo: salarioMes - gastosAcumulados - dividasMesAcumuladas,
         gastos: gastosAcumulados,
         dividasPagas: dividasPagasAcumuladas,
       };

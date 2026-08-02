@@ -1,4 +1,5 @@
 import type { Divida, OcorrenciaDivida } from "../../features/financas/types";
+import { normalizarCompetencia } from "../../features/financas/competencia";
 import {
   dividaParcelada as ehDividaParcelada,
   dividaPertenceCompetencia,
@@ -7,6 +8,7 @@ import {
   valorOcorrenciaDivida,
   valorParcelaDivida,
 } from "../../features/financas/ocorrencias";
+import { normalizarDataISO } from "../../utils/formatadores";
 
 export type Ordem = "recentes" | "antigos";
 
@@ -25,8 +27,7 @@ export type GrupoDividas = {
 };
 
 export function chaveMes(valor?: string | null) {
-  if (!valor) return "";
-  return String(valor).slice(0, 7);
+  return normalizarCompetencia(valor ?? "");
 }
 
 export function hojeISO() {
@@ -211,7 +212,7 @@ export function ocorrenciaEstaAtrasada(ocorrencia: OcorrenciaDivida) {
 }
 
 export function rotuloVencimento(data: string) {
-  const dia = Number(String(data).slice(8, 10));
+  const dia = Number(normalizarDataISO(data).slice(8, 10));
   return dia ? `Vence dia ${dia}` : "Sem vencimento";
 }
 

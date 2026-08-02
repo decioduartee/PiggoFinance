@@ -84,6 +84,59 @@ export function getMesAtualKey() {
   return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
 }
 
+export function dataLocalISO(data: Date) {
+  if (Number.isNaN(data.getTime())) {
+    return "";
+  }
+
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, "0");
+  const dia = String(data.getDate()).padStart(2, "0");
+
+  return `${ano}-${mes}-${dia}`;
+}
+
+export function normalizarDataISO(valor?: string | null) {
+  if (!valor) {
+    return "";
+  }
+
+  const texto = String(valor).trim();
+  const dataCurta = texto.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if (dataCurta) {
+    return `${dataCurta[1]}-${dataCurta[2]}-${dataCurta[3]}`;
+  }
+
+  const dataUTCMeiaNoite = texto.match(
+    /^(\d{4})-(\d{2})-(\d{2})T00:00:00(?:\.000)?Z$/,
+  );
+
+  if (dataUTCMeiaNoite) {
+    return `${dataUTCMeiaNoite[1]}-${dataUTCMeiaNoite[2]}-${dataUTCMeiaNoite[3]}`;
+  }
+
+  const br = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+
+  if (br) {
+    return `${br[3]}-${br[2]}-${br[1]}`;
+  }
+
+  const data = new Date(texto);
+
+  if (!Number.isNaN(data.getTime())) {
+    return dataLocalISO(data);
+  }
+
+  const inicioISO = texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+  if (inicioISO) {
+    return `${inicioISO[1]}-${inicioISO[2]}-${inicioISO[3]}`;
+  }
+
+  return "";
+}
+
 export function calcularMesAnterior(chave: string) {
   const [ano, mes] = chave.split("-").map(Number);
   const data = new Date(ano, mes - 2, 1);
@@ -103,10 +156,7 @@ export function nomeMes(chave: string) {
 }
 
 export function parseData(str: string) {
-  if (!str) return new Date(NaN);
-
-  // Se veio ISO completo, pega só a data
-  const apenasData = str.slice(0, 10);
+  const apenasData = normalizarDataISO(str);
 
   const [ano, mes, dia] = apenasData.split("-").map(Number);
 

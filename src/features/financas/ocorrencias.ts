@@ -5,6 +5,7 @@ import {
   montarVencimento,
   normalizarCompetencia,
 } from "./competencia";
+import { normalizarDataISO } from "../../utils/formatadores";
 
 export function hojeLocalISO() {
   const agora = new Date();
@@ -89,9 +90,9 @@ export function obterStatusOcorrencia(
     return "pago";
   }
 
-  const vencimento = String(ocorrencia.vencimento ?? "").slice(0, 10);
+  const vencimento = normalizarDataISO(ocorrencia.vencimento);
   const hoje = typeof dataReferencia === "string"
-    ? dataReferencia.slice(0, 10)
+    ? normalizarDataISO(dataReferencia)
     : hojeLocalISO();
 
   if (vencimento && hoje && hoje > vencimento) {

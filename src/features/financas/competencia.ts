@@ -1,3 +1,5 @@
+import { normalizarDataISO } from "../../utils/formatadores";
+
 export function gerarIdTemporario(prefixo: string) {
   return (
     `${prefixo}_TEMP_` +
@@ -11,7 +13,20 @@ export function normalizarCompetencia(valor?: string) {
     return "";
   }
 
-  const match = String(valor).match(/^(\d{4})-(\d{2})/);
+  const texto = String(valor).trim();
+  const competencia = texto.match(/^(\d{4})-(\d{2})$/);
+
+  if (competencia) {
+    return `${competencia[1]}-${competencia[2]}`;
+  }
+
+  const dataNormalizada = normalizarDataISO(texto);
+
+  if (dataNormalizada) {
+    return dataNormalizada.slice(0, 7);
+  }
+
+  const match = texto.match(/^(\d{4})-(\d{2})/);
 
   if (!match) {
     return "";

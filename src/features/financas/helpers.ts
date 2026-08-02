@@ -1,15 +1,18 @@
 import { Transacao } from "./types";
-import { rotuloDia } from "../../utils/formatadores";
+import { normalizarDataISO, rotuloDia } from "../../utils/formatadores";
 
 export type GrupoTransacoes = Record<string, Transacao[]>;
 
 export function dataEstaNoMes(data: string, mesAtual: string) {
-  return data.slice(0, 7) === mesAtual;
+  return normalizarDataISO(data).slice(0, 7) === mesAtual;
 }
 
 export function ordenarMaisRecentes(a: Transacao, b: Transacao) {
-  if (a.data !== b.data) {
-    return b.data.localeCompare(a.data);
+  const dataA = normalizarDataISO(a.data);
+  const dataB = normalizarDataISO(b.data);
+
+  if (dataA !== dataB) {
+    return dataB.localeCompare(dataA);
   }
 
   const idA = Number(a.id);
@@ -57,7 +60,9 @@ export function filtrarGastosDoMes(transacoes: Transacao[], mesAtual: string) {
       (item) => item.tipo === "saida" && dataEstaNoMes(item.data, mesAtual),
     )
     .sort((a, b) => {
-      const comparacaoData = b.data.localeCompare(a.data);
+      const comparacaoData = normalizarDataISO(b.data).localeCompare(
+        normalizarDataISO(a.data),
+      );
 
       if (comparacaoData !== 0) {
         return comparacaoData;

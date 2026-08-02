@@ -26,6 +26,7 @@ import {
   dividaPertenceCompetencia,
   obterStatusOcorrencia,
 } from "../../features/financas/ocorrencias";
+import { normalizarCompetencia } from "../../features/financas/competencia";
 
 import {
   DividasFixasCard,
@@ -107,28 +108,6 @@ export default function Inicio() {
   // ==========================================================
 
   const mesAtual = getMesAtualKey();
-
-  // ==========================================================
-  // Normalização da competência
-  // ==========================================================
-
-  function normalizarCompetencia(valor: string) {
-    if (!valor) {
-      return "";
-    }
-
-    /*
-     * Aceita tanto:
-     *
-     * 2026-07
-     *
-     * quanto:
-     *
-     * 2026-07-01T03:00:00.000Z
-     */
-
-    return String(valor).slice(0, 7);
-  }
 
   // ==========================================================
   // Ocorrências das dívidas do mês atual
