@@ -21,6 +21,7 @@ import {
 } from "lucide-react-native";
 
 import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import Valor from "../../components/ValorBlur";
@@ -39,6 +40,7 @@ import {
   valorOcorrenciaDivida,
 } from "../../features/financas/ocorrencias";
 import useFinance from "../../hooks/useFinance";
+import type { RootStackParamList } from "../../navigation/AppNavigator";
 import { CORAL, LIME_DARK, PURPLE, temaCores } from "../../theme/colors";
 import { rotuloDia } from "../../utils/formatadores";
 
@@ -200,10 +202,12 @@ export default function Historico() {
     useState<Transacao | null>(null);
   const [modalEditarDivida, setModalEditarDivida] = useState(false);
   const [dividaEditando, setDividaEditando] = useState<Divida | null>(null);
+  const [dividaExcluindo, setDividaExcluindo] = useState<Divida | null>(null);
   const [ordem, setOrdem] = useState<Ordem>("recentes");
   const [mesSelecionado, setMesSelecionado] = useState<string | null>(null);
 
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, "Historico">>();
 
   const {
     transacoes,
@@ -690,6 +694,12 @@ export default function Historico() {
     setModalEditarDivida(true);
   }
 
+  function solicitarExclusaoDivida(divida: Divida) {
+    if (divida.id.includes("TEMP_")) return;
+
+    setDividaExcluindo(divida);
+  }
+
   function excluir(id: string) {
     if (id.includes("TEMP_")) return;
 
@@ -704,6 +714,14 @@ export default function Historico() {
     if (!movimentacaoExcluindo) return;
 
     void excluirTransacao(movimentacaoExcluindo.id);
+    setMovimentacaoExcluindo(null);
+  }
+
+  function confirmarExclusaoDivida() {
+    if (!dividaExcluindo) return;
+
+    void excluirDivida(dividaExcluindo.id);
+    setDividaExcluindo(null);
   }
 
   const gruposLista = useMemo(
@@ -875,6 +893,11 @@ export default function Historico() {
           setModalEditarDivida(false);
           setDividaEditando(null);
         }}
+        onVerMaisDividas={() => {
+          setModalEditarDivida(false);
+          setDividaEditando(null);
+          navigation.navigate("DividasFixas");
+        }}
         onSalvar={(dados, id) => {
           if (id) {
             void editarDivida(id, dados);
@@ -899,6 +922,16 @@ export default function Historico() {
         textoConfirmar="Excluir"
         onCancelar={() => setMovimentacaoExcluindo(null)}
         onConfirmar={confirmarExclusaoMovimentacao}
+      />
+
+      <ConfirmacaoAlert
+        visivel={Boolean(dividaExcluindo)}
+        tipo="danger"
+        titulo="Excluir dívida"
+        mensagem={`Deseja realmente excluir "${dividaExcluindo?.nome ?? "esta dívida"}"?`}
+        textoConfirmar="Excluir"
+        onCancelar={() => setDividaExcluindo(null)}
+        onConfirmar={confirmarExclusaoDivida}
       />
 
       <FlatList
@@ -952,48 +985,49 @@ export default function Historico() {
                 <SwipeAction
                   key={item.id}
                   onEdit={() => abrirEdicaoDivida(divida)}
+                  onDelete={() => solicitarExclusaoDivida(divida)}
                   editLabel="Editar"
                 >
-                <View style={styles.linha}>
-                  <View style={styles.iconeDivida}>
-                    <Repeat size={20} color={PURPLE} />
-                  </View>
-
-                  <View style={styles.info}>
-                    <Text numberOfLines={1} style={styles.nome}>
-                      {divida.nome}
-                    </Text>
-
-                    <View style={styles.dividaDetalhes}>
-                      <Text style={styles.categoria}>{detalhe}</Text>
-
-                      <Text style={styles.dividaSeparador}>•</Text>
-
-                      <Text
-                        style={[
-                          styles.dividaStatus,
-                          futuro
-                            ? styles.statusPrevisto
-                            : statusOcorrencia === "pago"
-                              ? styles.statusPago
-                              : statusOcorrencia === "atrasada"
-                                ? styles.statusAtrasada
-                                : styles.statusPendente,
-                        ]}
-                      >
-                        {status}
-                      </Text>
+                  <View style={styles.linha}>
+                    <View style={styles.iconeDivida}>
+                      <Repeat size={20} color={PURPLE} />
                     </View>
-                  </View>
 
-                  <Valor
-                    valor={valorOcorrenciaDivida(ocorrencia, divida)}
-                    oculto={oculto}
-                    negativo
-                    cor={CORAL}
-                    style={styles.valor}
-                  />
-                </View>
+                    <View style={styles.info}>
+                      <Text numberOfLines={1} style={styles.nome}>
+                        {divida.nome}
+                      </Text>
+
+                      <View style={styles.dividaDetalhes}>
+                        <Text style={styles.categoria}>{detalhe}</Text>
+
+                        <Text style={styles.dividaSeparador}>•</Text>
+
+                        <Text
+                          style={[
+                            styles.dividaStatus,
+                            futuro
+                              ? styles.statusPrevisto
+                              : statusOcorrencia === "pago"
+                                ? styles.statusPago
+                                : statusOcorrencia === "atrasada"
+                                  ? styles.statusAtrasada
+                                  : styles.statusPendente,
+                          ]}
+                        >
+                          {status}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <Valor
+                      valor={valorOcorrenciaDivida(ocorrencia, divida)}
+                      oculto={oculto}
+                      negativo
+                      cor={CORAL}
+                      style={styles.valor}
+                    />
+                  </View>
                 </SwipeAction>
               );
             })}

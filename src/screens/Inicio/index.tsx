@@ -277,6 +277,7 @@ export default function Inicio() {
       valor: dados.valor,
       mesInicio: dados.data.getMonth() + 1,
       anoInicio: dados.data.getFullYear(),
+      diaVencimento: dados.data.getDate(),
     });
   }
 

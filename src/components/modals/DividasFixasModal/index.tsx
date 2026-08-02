@@ -69,6 +69,7 @@ export type PrefillDividaParcelada = {
   nome?: string;
   valor?: number;
   inicio?: string;
+  vencimento?: number;
 };
 
 // ==========================================================
@@ -122,42 +123,6 @@ function inicioParaBackend(valor: string) {
   return `${ano}-` + `${String(mes).padStart(2, "0")}-01`;
 }
 
-function inicioParaTela(valor?: string) {
-  if (!valor) {
-    return "";
-  }
-
-  const texto = String(valor).trim();
-
-  const mesAno = texto.match(/^(\d{2})\/(\d{4})$/);
-
-  if (mesAno) {
-    return `${mesAno[1]}/${mesAno[2]}`;
-  }
-
-  const dataBR = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-
-  if (dataBR) {
-    return `${dataBR[2]}/${dataBR[3]}`;
-  }
-
-  /*
-   * Aceita:
-   *
-   * 2026-08-01
-   * 2026-08
-   * 2026-08-01T03:00:00.000Z
-   */
-
-  const match = texto.match(/^(\d{4})-(\d{2})/);
-
-  if (!match) {
-    return "";
-  }
-
-  return `${match[2]}/${match[1]}`;
-}
-
 function inicioParaData(valor?: string | null) {
   if (!valor) {
     return new Date();
@@ -200,8 +165,70 @@ function dataParaInicioTela(data: Date) {
   return `${mes}/${ano}`;
 }
 
+function dataParaTela(data?: Date | null) {
+  if (!data || Number.isNaN(data.getTime())) {
+    return "";
+  }
+
+  const dia = String(data.getDate()).padStart(2, "0");
+  const mes = String(data.getMonth() + 1).padStart(2, "0");
+  const ano = data.getFullYear();
+
+  return `${dia}/${mes}/${ano}`;
+}
+
+function dataDaDivida(inicio?: string | null, vencimento?: number | string) {
+  const data = inicioParaData(inicio);
+  const dia = Number(vencimento);
+
+  if (!Number.isNaN(dia) && dia >= 1 && dia <= 31) {
+    const ultimoDia = new Date(
+      data.getFullYear(),
+      data.getMonth() + 1,
+      0,
+    ).getDate();
+
+    data.setDate(Math.min(dia, ultimoDia));
+  }
+
+  return data;
+}
+
+function aplicarDataDivida(
+  data: Date,
+  setInicio: (valor: string) => void,
+  setInicioData: (valor: Date) => void,
+  setVencimento: (valor: string) => void,
+) {
+  if (Number.isNaN(data.getTime())) {
+    return;
+  }
+
+  setInicioData(data);
+  setInicio(dataParaInicioTela(data));
+  setVencimento(String(data.getDate()));
+}
+
 function ehIdTemporario(id: string) {
   return id.includes("_TEMP_");
+}
+
+function timestampDivida(divida: Divida) {
+  const timestampCriacao = Date.parse(String(divida.criadoEm ?? ""));
+
+  if (!Number.isNaN(timestampCriacao)) {
+    return timestampCriacao;
+  }
+
+  const timestampId = String(divida.id).match(/(\d{10,})/);
+
+  if (timestampId) {
+    return Number(timestampId[1]);
+  }
+
+  const timestampAtualizacao = Date.parse(String(divida.atualizadoEm ?? ""));
+
+  return Number.isNaN(timestampAtualizacao) ? 0 : timestampAtualizacao;
 }
 
 // ==========================================================
@@ -299,13 +326,12 @@ export default function DividasFixasModal({
 
     setParcelasPagas("");
 
-    const inicioPrefill = dados.inicio ?? dataParaInicioTela(new Date());
-
-    setInicio(inicioPrefill);
-
-    setInicioData(inicioParaData(inicioPrefill));
-
-    setVencimento("");
+    aplicarDataDivida(
+      dataDaDivida(dados.inicio, dados.vencimento),
+      setInicio,
+      setInicioData,
+      setVencimento,
+    );
 
     setDividaExcluindo(null);
   }
@@ -374,13 +400,12 @@ export default function DividasFixasModal({
       item.parcelasPagas != null ? String(item.parcelasPagas) : "",
     );
 
-    const inicioTela = inicioParaTela(item.inicio);
-
-    setInicio(inicioTela);
-
-    setInicioData(inicioParaData(inicioTela || item.inicio));
-
-    setVencimento(item.vencimento != null ? String(item.vencimento) : "");
+    aplicarDataDivida(
+      dataDaDivida(item.inicio, item.vencimento),
+      setInicio,
+      setInicioData,
+      setVencimento,
+    );
   }
 
   // ========================================================
@@ -465,25 +490,13 @@ export default function DividasFixasModal({
     // ======================================================
 
     if (editando) {
-      /*
-       * IMPORTANTE:
-       *
-       * Ao editar, os campos estruturais são mantidos
-       * exatamente como estão.
-       *
-       * Não usamos os valores dos inputs para alterar:
-       *
-       * - tipo
-       * - parcelas
-       * - parcelasPagas
-       * - inicio
-       */
-
       const original = dividas.find((item) => item.id === id);
 
       if (!original) {
         return;
       }
+
+      const inicioBackend = inicioParaBackend(inicio) ?? original.inicio;
 
       const divida: NovaDivida = {
         nome: nomeLimpo,
@@ -498,7 +511,7 @@ export default function DividasFixasModal({
 
         parcelasPagas: original.parcelasPagas,
 
-        inicio: original.inicio,
+        inicio: inicioBackend,
 
         vencimento: diaVencimento,
 
@@ -606,11 +619,21 @@ export default function DividasFixasModal({
   }, [dividas]);
 
   const dividasVisiveis = useMemo(
-    () => dividas.slice(0, 2),
+    () =>
+      [...dividas]
+        .map((divida, indice) => ({ divida, indice }))
+        .sort((a, b) => {
+          const comparacao =
+            timestampDivida(b.divida) - timestampDivida(a.divida);
+
+          return comparacao || b.indice - a.indice;
+        })
+        .map((item) => item.divida)
+        .slice(0, 2),
     [dividas],
   );
 
-  const mostrarVerMais = dividas.length > dividasVisiveis.length;
+  const mostrarVerMais = Boolean(onVerMaisDividas);
 
   // ========================================================
   // RENDER
@@ -796,6 +819,53 @@ export default function DividasFixasModal({
                 onChangeText={alterarValor}
               />
 
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={styles.inputData}
+                onPress={() => setMostrarInicioPicker(true)}
+              >
+                <CalendarDays size={18} color={cores.GRAY} />
+
+                <Text
+                  style={[
+                    styles.inputDataTexto,
+                    !inicioData && {
+                      color: cores.GRAY,
+                    },
+                  ]}
+                >
+                  {dataParaTela(inicioData) || "Data de vencimento"}
+                </Text>
+
+                <ChevronDown size={18} color={cores.GRAY} />
+              </TouchableOpacity>
+
+              {mostrarInicioPicker && (
+                <DateTimePicker
+                  value={inicioData ?? new Date()}
+                  mode="date"
+                  display={Platform.OS === "ios" ? "spinner" : "calendar"}
+                  onChange={(event, selectedDate) => {
+                    if (Platform.OS === "android") {
+                      setMostrarInicioPicker(false);
+                    }
+
+                    if (event.type === "dismissed") {
+                      return;
+                    }
+
+                    if (selectedDate) {
+                      aplicarDataDivida(
+                        selectedDate,
+                        setInicio,
+                        setInicioData,
+                        setVencimento,
+                      );
+                    }
+                  }}
+                />
+              )}
+
               {/* =========================================== */}
               {/* TIPO */}
               {/* =========================================== */}
@@ -862,82 +932,8 @@ export default function DividasFixasModal({
                     onChangeText={setParcelasPagas}
                   />
 
-                  {/* MÊS INICIAL */}
-
-                  <TouchableOpacity
-                    activeOpacity={0.85}
-                    disabled={editando}
-                    style={[
-                      styles.inputData,
-                      editando && {
-                        opacity: 0.5,
-                      },
-                    ]}
-                    onPress={() => setMostrarInicioPicker(true)}
-                  >
-                    <CalendarDays size={18} color={cores.GRAY} />
-
-                    <Text
-                      style={[
-                        styles.inputDataTexto,
-                        !inicio && {
-                          color: cores.GRAY,
-                        },
-                      ]}
-                    >
-                      {inicio || "Mês inicial"}
-                    </Text>
-
-                    <ChevronDown size={18} color={cores.GRAY} />
-                  </TouchableOpacity>
-
-                  {mostrarInicioPicker && (
-                    <DateTimePicker
-                      value={inicioData ?? inicioParaData(inicio)}
-                      mode="date"
-                      display={Platform.OS === "ios" ? "spinner" : "calendar"}
-                      onChange={(event, selectedDate) => {
-                        if (Platform.OS === "android") {
-                          setMostrarInicioPicker(false);
-                        }
-
-                        if (event.type === "dismissed") {
-                          return;
-                        }
-
-                        if (selectedDate) {
-                          const dataInicio = new Date(
-                            selectedDate.getFullYear(),
-                            selectedDate.getMonth(),
-                            1,
-                          );
-
-                          setInicioData(dataInicio);
-                          setInicio(dataParaInicioTela(dataInicio));
-                        }
-                      }}
-                    />
-                  )}
                 </>
               )}
-
-              {/* =========================================== */}
-              {/* VENCIMENTO */}
-              {/* =========================================== */}
-
-              <TextInput
-                style={styles.input}
-                placeholder="Dia do vencimento (opcional)"
-                placeholderTextColor={cores.GRAY}
-                keyboardType="number-pad"
-                value={vencimento}
-                onChangeText={(texto) => {
-                  const numeros = texto.replace(/\D/g, "").slice(0, 2);
-
-                  setVencimento(numeros);
-                }}
-                maxLength={2}
-              />
 
               {/* =========================================== */}
               {/* SALVAR */}

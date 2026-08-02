@@ -16,6 +16,7 @@ export type RootStackParamList = {
         valor?: number;
         mesInicio?: number;
         anoInicio?: number;
+        diaVencimento?: number;
       }
     | undefined;
 };

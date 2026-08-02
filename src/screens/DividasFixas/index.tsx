@@ -198,6 +198,7 @@ export default function DividasFixas() {
       nome: params.nome,
       valor: params.valor,
       inicio,
+      vencimento: params.diaVencimento,
     });
     setModalEdicaoDivida(true);
     setPrefillAplicado(chave);
@@ -297,6 +298,11 @@ export default function DividasFixas() {
         prefillDivida={prefillDivida}
         dividaInicial={dividaEditando?.divida ?? null}
         onFechar={() => {
+          setModalEdicaoDivida(false);
+          setDividaEditando(null);
+          setPrefillDivida(null);
+        }}
+        onVerMaisDividas={() => {
           setModalEdicaoDivida(false);
           setDividaEditando(null);
           setPrefillDivida(null);
