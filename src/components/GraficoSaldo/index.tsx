@@ -8,6 +8,8 @@ import { CORAL, LIME_DARK, PURPLE } from "../../theme/colors";
 import { styles } from "./styles";
 import { GraficoSaldoProps } from "./types";
 
+const FATOR_ESCALA_GASTOS = 0.6;
+
 export default function GraficoSaldo({
   data,
   cores,
@@ -64,7 +66,7 @@ export default function GraficoSaldo({
       return 1;
     }
 
-    return alturaPicoVisivel / maiorGastoDia;
+    return (alturaPicoVisivel * FATOR_ESCALA_GASTOS) / maiorGastoDia;
   }, [alturaPicoVisivel, maiorGastoDia]);
 
   const escalaDividasPagas = useMemo(() => {
@@ -205,7 +207,7 @@ export default function GraficoSaldo({
           width={larguraGrafico}
           height={180}
           areaChart
-          curved={false}
+          curved
           color1={LIME_DARK}
           thickness1={3}
           zIndex1={2}
