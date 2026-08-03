@@ -39,17 +39,45 @@ export default function GraficoSaldo({
     [data],
   );
 
+  const maiorMovimentoDia = useMemo(
+    () =>
+      Math.max(
+        ...data.flatMap((item) => [item.gastoDia, item.dividaPagaDia]),
+        0,
+      ),
+    [data],
+  );
+
+  const maiorSaldoAbsoluto = useMemo(
+    () => Math.max(...data.map((item) => Math.abs(item.saldo)), 100),
+    [data],
+  );
+
+  const escalaMovimentos = useMemo(() => {
+    if (maiorMovimentoDia <= 0) {
+      return 1;
+    }
+
+    const alturaMinimaVisivel = maiorSaldoAbsoluto * 0.32;
+
+    if (maiorMovimentoDia >= alturaMinimaVisivel) {
+      return 1;
+    }
+
+    return alturaMinimaVisivel / maiorMovimentoDia;
+  }, [maiorMovimentoDia, maiorSaldoAbsoluto]);
+
   const maiorValor = useMemo(
     () =>
       Math.max(
         ...data.flatMap((item) => [
           item.saldo,
-          item.gastoDia,
-          item.dividaPagaDia,
+          item.gastoDia * escalaMovimentos,
+          item.dividaPagaDia * escalaMovimentos,
         ]),
         100,
       ),
-    [data],
+    [data, escalaMovimentos],
   );
 
   const menorValor = useMemo(
@@ -70,21 +98,21 @@ export default function GraficoSaldo({
   const gastosData = useMemo(
     () =>
       data.map((item) => ({
-        value: item.gastoDia,
+        value: item.gastoDia * escalaMovimentos,
         label: item.label,
         customDataPoint: () => null,
       })),
-    [data],
+    [data, escalaMovimentos],
   );
 
   const dividasPagasData = useMemo(
     () =>
       data.map((item) => ({
-        value: item.dividaPagaDia,
+        value: item.dividaPagaDia * escalaMovimentos,
         label: item.label,
         customDataPoint: () => null,
       })),
-    [data],
+    [data, escalaMovimentos],
   );
 
   const temDividasPagas = useMemo(
