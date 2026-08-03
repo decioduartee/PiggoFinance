@@ -44,8 +44,8 @@ export default function GraficoSaldo({
       Math.max(
         ...data.flatMap((item) => [
           item.saldo,
-          item.gastos,
-          item.dividasPagas,
+          item.gastoDia,
+          item.dividaPagaDia,
         ]),
         100,
       ),
@@ -70,7 +70,7 @@ export default function GraficoSaldo({
   const gastosData = useMemo(
     () =>
       data.map((item) => ({
-        value: item.gastos,
+        value: item.gastoDia,
         label: item.label,
         customDataPoint: () => null,
       })),
@@ -80,7 +80,7 @@ export default function GraficoSaldo({
   const dividasPagasData = useMemo(
     () =>
       data.map((item) => ({
-        value: item.dividasPagas,
+        value: item.dividaPagaDia,
         label: item.label,
         customDataPoint: () => null,
       })),
@@ -88,7 +88,7 @@ export default function GraficoSaldo({
   );
 
   const temDividasPagas = useMemo(
-    () => data.some((item) => item.dividasPagas > 0),
+    () => data.some((item) => item.dividaPagaDia > 0),
     [data],
   );
 
