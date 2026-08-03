@@ -247,6 +247,14 @@ export function createStyles(modoEscuro: boolean) {
       backgroundColor: cores.GRAY,
     },
 
+    statusButtonReativar: {
+      backgroundColor: PURPLE,
+    },
+
+    statusButtonDesativar: {
+      backgroundColor: cores.GRAY,
+    },
+
     statusTexto: {
       fontSize: 13,
       fontWeight: "700",

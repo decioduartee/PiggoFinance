@@ -35,7 +35,6 @@ import { CardResumo, LinhaDivida } from "./components";
 import { createStyles } from "./styles";
 import {
   agruparPorVencimento,
-  chaveMes,
   montarDividasDoMes,
   montarTodasDividas,
   numeroParcelaDaCompetencia,
@@ -67,6 +66,10 @@ export default function DividasFixas() {
     useState<ItemDivida | null>(null);
   const [dividaConfirmandoExclusao, setDividaConfirmandoExclusao] =
     useState<ItemDivida | null>(null);
+  const [dividaConfirmandoStatus, setDividaConfirmandoStatus] = useState<{
+    item: ItemDivida;
+    ativa: boolean;
+  } | null>(null);
   const [modalEdicaoDivida, setModalEdicaoDivida] = useState(false);
   const [dividaEditando, setDividaEditando] = useState<ItemDivida | null>(null);
   const [prefillDivida, setPrefillDivida] =
@@ -191,6 +194,60 @@ export default function DividasFixas() {
     if (!dividaConfirmandoPagamento) return;
 
     void marcarComoPago(dividaConfirmandoPagamento);
+  }
+
+  async function alterarStatusCadastroDivida(item: ItemDivida, ativa: boolean) {
+    const chaveAtualizacao = item.divida.id;
+
+    if (
+      chaveAtualizacao.includes("_TEMP_") ||
+      atualizando.has(chaveAtualizacao)
+    ) {
+      return;
+    }
+
+    setAtualizando((estado) => {
+      const proximo = new Set(estado);
+      proximo.add(chaveAtualizacao);
+      return proximo;
+    });
+
+    try {
+      await alterarStatusDivida(chaveAtualizacao, ativa);
+    } catch (erro) {
+      console.error("Erro ao alterar status da dívida:", erro);
+      setErroAtualizacao(true);
+    } finally {
+      setTimeout(() => {
+        setAtualizando((estado) => {
+          const proximo = new Set(estado);
+          proximo.delete(chaveAtualizacao);
+          return proximo;
+        });
+      }, COOLDOWN_STATUS_MS);
+    }
+  }
+
+  function solicitarAlteracaoStatusCadastro(item: ItemDivida) {
+    if (atualizando.has(item.divida.id)) {
+      return;
+    }
+
+    setDividaConfirmandoStatus({
+      item,
+      ativa: item.divida.ativa === false,
+    });
+  }
+
+  function confirmarAlteracaoStatusCadastro() {
+    if (!dividaConfirmandoStatus) {
+      return;
+    }
+
+    void alterarStatusCadastroDivida(
+      dividaConfirmandoStatus.item,
+      dividaConfirmandoStatus.ativa,
+    );
   }
 
   useEffect(() => {
@@ -414,6 +471,26 @@ export default function DividasFixas() {
       />
 
       <ConfirmacaoAlert
+        visivel={Boolean(dividaConfirmandoStatus)}
+        tipo={dividaConfirmandoStatus?.ativa ? "success" : "info"}
+        titulo={
+          dividaConfirmandoStatus?.ativa
+            ? "Reativar dívida"
+            : "Desativar dívida"
+        }
+        mensagem={
+          dividaConfirmandoStatus?.ativa
+            ? `Deseja reativar "${dividaConfirmandoStatus?.item.divida.nome ?? "esta dívida"}"?`
+            : `Deseja desativar "${dividaConfirmandoStatus?.item.divida.nome ?? "esta dívida"}"?`
+        }
+        textoConfirmar={
+          dividaConfirmandoStatus?.ativa ? "Reativar" : "Desativar"
+        }
+        onCancelar={() => setDividaConfirmandoStatus(null)}
+        onConfirmar={confirmarAlteracaoStatusCadastro}
+      />
+
+      <ConfirmacaoAlert
         visivel={erroAtualizacao}
         tipo="info"
         titulo="Não foi possível atualizar"
@@ -446,12 +523,17 @@ export default function DividasFixas() {
               const pago = ocorrenciaEstaPaga(item.ocorrencia);
               const atrasada = ocorrenciaEstaAtrasada(item.ocorrencia);
               const valor = valorDaDivida(item);
-              const futura =
-                modoLista === "todas" &&
-                item.prevista &&
-                chaveMes(item.divida.inicio) > competenciaAtual;
+              const gerenciandoCadastro = modoLista === "todas";
               const statusDesabilitado =
-                modoLista === "todas" && item.prevista;
+                !gerenciandoCadastro && item.prevista;
+              const statusTexto = gerenciandoCadastro
+                ? item.divida.ativa === false
+                  ? "Reativar"
+                  : "Desativar"
+                : undefined;
+              const onPressStatus = gerenciandoCadastro
+                ? () => solicitarAlteracaoStatusCadastro(item)
+                : () => alternarStatus(item);
 
               return (
                 <SwipeAction
@@ -463,13 +545,13 @@ export default function DividasFixas() {
                   <LinhaDivida
                     divida={item.divida}
                     valor={valor}
-                    pago={pago}
+                    pago={gerenciandoCadastro ? false : pago}
                     atrasada={atrasada}
                     oculto={oculto}
                     atualizando={atualizando.has(item.divida.id)}
                     statusDesabilitado={statusDesabilitado}
-                    statusTexto={futura ? "Futura" : undefined}
-                    onPressStatus={() => alternarStatus(item)}
+                    statusTexto={statusTexto}
+                    onPressStatus={onPressStatus}
                     cores={cores}
                     styles={styles}
                     numeroParcela={

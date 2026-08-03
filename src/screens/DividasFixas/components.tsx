@@ -93,7 +93,25 @@ export function LinhaDivida({
   const parcelada = dividaParcelada(divida);
   const total = totalParcelas(divida);
   const inativa = divida.ativa === false;
-  const statusBloqueado = atualizando || statusDesabilitado || inativa;
+  const statusBloqueado = atualizando || statusDesabilitado;
+  const reativar = inativa && statusTexto === "Reativar";
+  const desativar = statusTexto === "Desativar";
+  const estiloStatus = reativar
+    ? styles.statusButtonReativar
+    : desativar
+      ? styles.statusButtonDesativar
+      : inativa
+        ? styles.statusButtonInativa
+        : atrasada
+          ? styles.statusButtonAtrasada
+          : styles.statusButtonPendente;
+  const corBordaStatus = reativar
+    ? PURPLE
+    : desativar || inativa
+      ? cores.GRAY
+      : atrasada
+        ? CORAL
+        : PURPLE;
 
   return (
     <View style={[styles.card, { backgroundColor: cores.CARD }]}>
@@ -143,21 +161,16 @@ export function LinhaDivida({
           onPress={onPressStatus}
           style={[
             styles.statusButton,
-            inativa
-              ? styles.statusButtonInativa
-              : atrasada
-                ? styles.statusButtonAtrasada
-                : styles.statusButtonPendente,
+            estiloStatus,
             {
-              borderColor: inativa ? cores.GRAY : atrasada ? CORAL : PURPLE,
+              borderColor: corBordaStatus,
               opacity: atualizando ? 0.55 : 1,
             },
           ]}
         >
           <Text style={[styles.statusTexto, { color: "#fff" }]}>
-            {inativa
-              ? "Inativa"
-              : statusTexto ?? (atrasada ? "Atrasada" : "Pendente")}
+            {statusTexto ??
+              (inativa ? "Inativa" : atrasada ? "Atrasada" : "Pendente")}
           </Text>
         </TouchableOpacity>
       )}
