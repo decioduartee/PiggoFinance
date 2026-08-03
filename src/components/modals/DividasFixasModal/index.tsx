@@ -61,8 +61,6 @@ type Props = {
   onSalvar: (divida: NovaDivida, id?: string) => void | Promise<void>;
 
   onExcluir: (id: string) => void | Promise<void>;
-
-  onAlterarStatus: (id: string, ativa: boolean) => void | Promise<void>;
 };
 
 export type PrefillDividaParcelada = {
@@ -244,7 +242,6 @@ export default function DividasFixasModal({
   onVerMaisDividas,
   onSalvar,
   onExcluir,
-  onAlterarStatus,
 }: Props) {
   // ========================================================
   // FORMULÁRIO
@@ -736,26 +733,6 @@ export default function DividasFixasModal({
                       )}
                     </View>
 
-                    {/* =================================== */}
-                    {/* STATUS */}
-                    {/* =================================== */}
-
-                    <Switch
-                      value={item.ativa}
-                      disabled={sincronizando}
-                      onValueChange={(ativa) => {
-                        if (sincronizando) {
-                          return;
-                        }
-
-                        void onAlterarStatus(item.id, ativa);
-                      }}
-                      trackColor={{
-                        false: "#DDD",
-                        true: PURPLE,
-                      }}
-                      thumbColor={item.ativa ? PURPLE : "#DDD"}
-                    />
                   </View>
                 );
 

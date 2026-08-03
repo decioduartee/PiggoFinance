@@ -446,9 +446,6 @@ export default function DividasFixas() {
         onExcluir={(id) => {
           void excluirDivida(id);
         }}
-        onAlterarStatus={(id, ativa) => {
-          void alterarStatusDivida(id, ativa);
-        }}
       />
 
       <ConfirmacaoAlert

@@ -85,7 +85,6 @@ export default function Inicio() {
     adicionarDivida,
     editarDivida,
     excluirDivida,
-    alterarStatusDivida,
     alterarStatusOcorrencia,
 
     competenciaAtual,
@@ -383,13 +382,6 @@ export default function Inicio() {
 
         onExcluir={(id) => {
           void excluirDivida(id);
-        }}
-        // ====================================================
-        // Ativar / desativar
-        // ====================================================
-
-        onAlterarStatus={(id, ativa) => {
-          void alterarStatusDivida(id, ativa);
         }}
       />
 

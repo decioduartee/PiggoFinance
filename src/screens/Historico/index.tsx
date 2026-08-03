@@ -297,7 +297,6 @@ export default function Historico() {
     adicionarDivida,
     editarDivida,
     excluirDivida,
-    alterarStatusDivida,
   } = useFinance();
 
   const cores = useMemo(() => temaCores(modoEscuro), [modoEscuro]);
@@ -965,9 +964,6 @@ export default function Historico() {
         }}
         onExcluir={(id) => {
           void excluirDivida(id);
-        }}
-        onAlterarStatus={(id, ativa) => {
-          void alterarStatusDivida(id, ativa);
         }}
       />
 
