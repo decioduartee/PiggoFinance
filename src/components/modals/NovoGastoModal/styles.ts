@@ -84,7 +84,6 @@ export function createStyles(modoEscuro: boolean, bottomInset = 0) {
     },
 
     valorRapidoSelecionado: {
-      backgroundColor: C.PURPLELIGHT ?? PURPLELIGHT,
       borderColor: PURPLE,
     },
 
@@ -125,7 +124,6 @@ export function createStyles(modoEscuro: boolean, bottomInset = 0) {
     botaoDividaParcelada: {
       height: 46,
       borderRadius: 14,
-      backgroundColor: C.PURPLELIGHT ?? PURPLELIGHT,
       borderWidth: 1,
       borderColor: PURPLE,
       flexDirection: "row",

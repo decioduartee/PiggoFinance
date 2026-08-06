@@ -101,7 +101,6 @@ export const createStyles = (
     botaoVerMais: {
       height: 42,
       borderRadius: 14,
-      backgroundColor: C.BG,
       justifyContent: "center",
       alignItems: "center",
       marginBottom: 12,
