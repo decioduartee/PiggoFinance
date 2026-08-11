@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-
 import {
   FlatList,
   Text,
@@ -7,7 +6,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
 import {
   ArrowDownLeft,
   ArrowDownUp,
@@ -19,11 +17,9 @@ import {
   Repeat,
   Search,
 } from "lucide-react-native";
-
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import Valor from "../../components/ValorBlur";
 import ConfirmacaoAlert from "../../components/ConfirmacaoAlert";
 import DividasFixasModal from "../../components/modals/DividasFixasModal";
@@ -43,12 +39,10 @@ import useFinance from "../../hooks/useFinance";
 import type { RootStackParamList } from "../../navigation/AppNavigator";
 import { CORAL, LIME_DARK, PURPLE, temaCores } from "../../theme/colors";
 import { normalizarDataISO, rotuloDia } from "../../utils/formatadores";
-
 import MovimentacaoCard from "./MovimentacaoCard";
 import { createStyles } from "./styles";
 
 type Ordem = "recentes" | "antigos";
-
 type ItemHistorico =
   | {
       tipoItem: "transacao";
@@ -144,7 +138,7 @@ function criarOcorrenciaPrevista(
     numeroParcela,
     status: "pendente",
     vencimento: `${competencia}-${String(dia).padStart(2, "0")}`,
-    pagoEm: "", 
+    pagoEm: "",
   };
 }
 
@@ -161,7 +155,6 @@ function dataOcorrencia(ocorrencia: OcorrenciaDivida, divida: Divida) {
   }
 
   const dia = Math.min(Math.max(Number(divida.vencimento) || 1, 1), 28);
-
   return `${competencia}-${String(dia).padStart(2, "0")}`;
 }
 
@@ -192,11 +185,7 @@ function timestampItemHistorico(item: ItemHistorico) {
   return 0;
 }
 
-function compararDataCalendario(
-  dataA: string,
-  dataB: string,
-  ordem: Ordem,
-) {
+function compararDataCalendario(dataA: string, dataB: string, ordem: Ordem) {
   const comparacao = normalizarDataISO(dataA).localeCompare(
     normalizarDataISO(dataB),
   );
@@ -300,9 +289,7 @@ export default function Historico() {
   } = useFinance();
 
   const cores = useMemo(() => temaCores(modoEscuro), [modoEscuro]);
-
   const styles = useMemo(() => createStyles(modoEscuro), [modoEscuro]);
-
   // Sempre abre na competência real atual.
   const mesAtual = mesSelecionado ?? competenciaAtual;
   const mesFuturo = mesAtual > competenciaAtual;
@@ -310,10 +297,8 @@ export default function Historico() {
   // ========================================================
   // Previsões de dívidas
   // ========================================================
-
   const ocorrenciasPrevistas = useMemo(() => {
     const previstas: OcorrenciaDivida[] = [];
-
     const chavesReais = new Set(
       ocorrenciasDividas.map(
         (item) => `${item.dividaId}_${chaveMes(item.competencia)}`,
@@ -327,7 +312,6 @@ export default function Historico() {
      * Dívidas fixas NÃO criam meses futuros sozinhas.
      */
     let ultimaCompetenciaParcelada = competenciaAtual;
-
     dividas.forEach((divida) => {
       if (!divida.ativa || divida.tipo !== "parcelada") {
         return;
@@ -376,7 +360,6 @@ export default function Historico() {
             );
           }
         }
-
         return;
       }
 
@@ -391,13 +374,10 @@ export default function Historico() {
        * mês atual (ou usa a ocorrência real já existente).
        */
       const inicio = chaveMes(divida.inicio);
-
       const limite = existeParceladaFutura
         ? ultimaCompetenciaParcelada
         : competenciaAtual;
-
       let competencia = competenciaAtual;
-
       while (competencia <= limite) {
         if (!inicio || competencia >= inicio) {
           const chave = `${divida.id}_${competencia}`;
@@ -406,14 +386,11 @@ export default function Historico() {
             previstas.push(criarOcorrenciaPrevista(divida, competencia));
           }
         }
-
         competencia = adicionarMeses(competencia, 1);
       }
     });
-
     return previstas;
   }, [dividas, ocorrenciasDividas, competenciaAtual]);
-
   const todasOcorrencias = useMemo(
     () => [...ocorrenciasDividas, ...ocorrenciasPrevistas],
     [ocorrenciasDividas, ocorrenciasPrevistas],
@@ -422,10 +399,8 @@ export default function Historico() {
   // ========================================================
   // Competências disponíveis
   // ========================================================
-
   const mesesDisponiveis = useMemo(() => {
     const meses = new Set<string>();
-
     transacoes.forEach((item) => {
       const competencia = chaveMes(item.data);
       if (competencia) meses.add(competencia);
@@ -457,7 +432,6 @@ export default function Historico() {
   // ========================================================
   // Dados da competência
   // ========================================================
-
   const transacoesDoMes = useMemo(
     () => transacoes.filter((item) => chaveMes(item.data) === mesAtual),
     [transacoes, mesAtual],
@@ -495,7 +469,6 @@ export default function Historico() {
      */
     const salariosValidos = salarios.filter((item) => {
       const competenciaSalario = chaveMes(item.data);
-
       return competenciaSalario && competenciaSalario <= mesAtual;
     });
 
@@ -509,11 +482,9 @@ export default function Historico() {
      */
     const ultimaCompetenciaSalario = salariosValidos.reduce((ultima, item) => {
       const competencia = chaveMes(item.data);
-
       if (!ultima || competencia > ultima) {
         return competencia;
       }
-
       return ultima;
     }, "");
 
@@ -540,7 +511,6 @@ export default function Historico() {
   // ========================================================
   // Timeline unificada: transações + dívidas
   // ========================================================
-
   const itensDoMes = useMemo<ItemHistorico[]>(() => {
     const transacoesTimeline: ItemHistorico[] = transacoesDoMes.map(
       (transacao) => ({
@@ -550,15 +520,12 @@ export default function Historico() {
         transacao,
       }),
     );
-
     const dividasTimeline: ItemHistorico[] = ocorrenciasDoMes.flatMap(
       (ocorrencia) => {
         const divida = dividas.find((item) => item.id === ocorrencia.dividaId);
-
         if (!divida) {
           return [];
         }
-
         return [
           {
             tipoItem: "divida" as const,
@@ -570,21 +537,17 @@ export default function Historico() {
         ];
       },
     );
-
     return [...transacoesTimeline, ...dividasTimeline];
   }, [transacoesDoMes, ocorrenciasDoMes, dividas]);
 
   const itensFiltrados = useMemo(() => {
     const texto = busca.trim().toLowerCase();
     const textoValor = texto.replace(".", ",");
-
     return [...itensDoMes]
       .filter((item) => {
         if (!texto) return true;
-
         if (item.tipoItem === "transacao") {
           const transacao = item.transacao;
-
           return (
             String(transacao.nome ?? "")
               .toLowerCase()
@@ -598,12 +561,10 @@ export default function Historico() {
 
         const { divida, ocorrencia } = item;
         const statusOcorrencia = obterStatusOcorrencia(ocorrencia);
-
         const detalhe =
           divida.tipo === "parcelada"
             ? `parcela ${ocorrencia.numeroParcela ?? ""}/${divida.parcelas ?? ""}`
             : "dívida fixa";
-
         return (
           String(divida.nome ?? "")
             .toLowerCase()
@@ -641,8 +602,14 @@ export default function Historico() {
    */
   const totalDividasMes = useMemo(() => {
     const contabilizadas = new Set<string>();
-
     return ocorrenciasDoMes.reduce((soma, ocorrencia) => {
+      const status = obterStatusOcorrencia(ocorrencia);
+
+      // Só considera dívida que realmente foi paga
+      if (status !== "pago") {
+        return soma;
+      }
+
       if (contabilizadas.has(ocorrencia.dividaId)) {
         return soma;
       }
@@ -654,7 +621,6 @@ export default function Historico() {
       }
 
       contabilizadas.add(ocorrencia.dividaId);
-
       return soma + Math.abs(Number(divida.valor) || 0);
     }, 0);
   }, [ocorrenciasDoMes, dividas]);
@@ -714,7 +680,6 @@ export default function Historico() {
 
   const grupos = useMemo(() => {
     const resultado: Record<string, ItemHistorico[]> = {};
-
     itensFiltrados.forEach((item) => {
       const rotulo = item.data ? rotuloDia(item.data) : "Sem data";
 
@@ -738,44 +703,36 @@ export default function Historico() {
 
   function abrirEdicao(item: Transacao) {
     if (item.id.includes("TEMP_")) return;
-
     setMovimentacaoEditando(item);
     setModalEditar(true);
   }
 
   function abrirEdicaoDivida(divida: Divida) {
     if (divida.id.includes("TEMP_")) return;
-
     setDividaEditando(divida);
     setModalEditarDivida(true);
   }
 
   function solicitarExclusaoDivida(divida: Divida) {
     if (divida.id.includes("TEMP_")) return;
-
     setDividaExcluindo(divida);
   }
 
   function excluir(id: string) {
     if (id.includes("TEMP_")) return;
-
     const transacao = transacoes.find((item) => item.id === id);
-
     if (!transacao) return;
-
     setMovimentacaoExcluindo(transacao);
   }
 
   function confirmarExclusaoMovimentacao() {
     if (!movimentacaoExcluindo) return;
-
     void excluirTransacao(movimentacaoExcluindo.id);
     setMovimentacaoExcluindo(null);
   }
 
   function confirmarExclusaoDivida() {
     if (!dividaExcluindo) return;
-
     void excluirDivida(dividaExcluindo.id);
     setDividaExcluindo(null);
   }
@@ -813,18 +770,14 @@ export default function Historico() {
           )}
         </TouchableOpacity>
       </View>
-
       <Text style={styles.titulo}>Histórico</Text>
-
       <Text style={styles.subtitulo}>
         {mesFuturo
           ? "Movimentações e compromissos previstos"
           : "Movimentações e compromissos do mês"}
       </Text>
-
       <View style={styles.buscaBox}>
         <Search size={18} color={cores.GRAY} />
-
         <TextInput
           placeholder="Buscar nome, categoria ou valor..."
           placeholderTextColor={cores.GRAY}
@@ -833,7 +786,6 @@ export default function Historico() {
           style={styles.buscaInput}
         />
       </View>
-
       <FlatList
         horizontal
         data={mesesDisponiveis}
@@ -843,7 +795,6 @@ export default function Historico() {
         contentContainerStyle={styles.meses}
         renderItem={({ item: mes }) => {
           const selecionado = mes === mesAtual;
-
           return (
             <TouchableOpacity
               activeOpacity={0.85}
@@ -865,7 +816,6 @@ export default function Historico() {
           );
         }}
       />
-
       {mesFuturo && (
         <View style={styles.previsaoBox}>
           <CalendarClock size={16} color={PURPLE} />
@@ -874,17 +824,14 @@ export default function Historico() {
           </Text>
         </View>
       )}
-
       <View style={styles.resumo}>
         <View style={styles.resumoCard}>
           <View style={styles.resumoIconeEntrada}>
             <ArrowUpRight size={17} color={LIME_DARK} />
           </View>
-
           <Text style={styles.resumoLabel}>
             {mesFuturo ? "Saldo previsto" : "Saldo disponível"}
           </Text>
-
           <Valor
             valor={saldoMes}
             oculto={oculto}
@@ -893,14 +840,11 @@ export default function Historico() {
             style={styles.resumoValor}
           />
         </View>
-
         <View style={styles.resumoCard}>
           <View style={styles.resumoIconeSaida}>
             <ArrowDownLeft size={17} color={CORAL} />
           </View>
-
           <Text style={styles.resumoLabel}>Saídas</Text>
-
           <Valor
             valor={totalSaidasMes}
             oculto={oculto}
@@ -911,7 +855,6 @@ export default function Historico() {
           />
         </View>
       </View>
-
       <TouchableOpacity
         style={styles.ordenacao}
         activeOpacity={0.8}
@@ -959,14 +902,12 @@ export default function Historico() {
             void editarDivida(id, dados);
             return;
           }
-
           void adicionarDivida(dados);
         }}
         onExcluir={(id) => {
           void excluirDivida(id);
         }}
       />
-
       <ConfirmacaoAlert
         visivel={Boolean(movimentacaoExcluindo)}
         tipo="danger"
@@ -976,7 +917,6 @@ export default function Historico() {
         onCancelar={() => setMovimentacaoExcluindo(null)}
         onConfirmar={confirmarExclusaoMovimentacao}
       />
-
       <ConfirmacaoAlert
         visivel={Boolean(dividaExcluindo)}
         tipo="danger"
@@ -986,7 +926,6 @@ export default function Historico() {
         onCancelar={() => setDividaExcluindo(null)}
         onConfirmar={confirmarExclusaoDivida}
       />
-
       <FlatList
         data={gruposLista}
         keyExtractor={(item) => item.titulo}
@@ -1002,7 +941,6 @@ export default function Historico() {
         renderItem={({ item: grupo }) => (
           <View style={styles.grupo}>
             <Text style={styles.grupoTitulo}>{grupo.titulo}</Text>
-
             {grupo.itens.map((item) => {
               if (item.tipoItem === "transacao") {
                 return (
@@ -1015,19 +953,17 @@ export default function Historico() {
                   />
                 );
               }
-
               const { divida, ocorrencia } = item;
               const futuro =
                 chaveMes(ocorrencia.competencia) > competenciaAtual;
               const statusOcorrencia = obterStatusOcorrencia(ocorrencia);
-
               const status = futuro
                 ? "Previsto"
                 : statusOcorrencia === "pago"
                   ? "Pago"
                   : statusOcorrencia === "atrasada"
                     ? "Atrasada"
-                  : "Pendente";
+                    : "Pendente";
 
               const detalhe =
                 divida.tipo === "parcelada"
@@ -1045,17 +981,13 @@ export default function Historico() {
                     <View style={styles.iconeDivida}>
                       <Repeat size={20} color={PURPLE} />
                     </View>
-
                     <View style={styles.info}>
                       <Text numberOfLines={1} style={styles.nome}>
                         {divida.nome}
                       </Text>
-
                       <View style={styles.dividaDetalhes}>
                         <Text style={styles.categoria}>{detalhe}</Text>
-
                         <Text style={styles.dividaSeparador}>•</Text>
-
                         <Text
                           style={[
                             styles.dividaStatus,
@@ -1072,7 +1004,6 @@ export default function Historico() {
                         </Text>
                       </View>
                     </View>
-
                     <Valor
                       valor={valorOcorrenciaDivida(ocorrencia, divida)}
                       oculto={oculto}
